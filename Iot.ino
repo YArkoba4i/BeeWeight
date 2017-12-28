@@ -19,16 +19,20 @@
 #include <AzureIoTProtocol_MQTT.h>
 #include <AzureIoTUtility.h>
 
+
+
 #include "config.h"
 
 static bool messagePending = false;
 static bool messageSending = true;
 
- char *connectionString = "HostName=...";
- char *ssid = "...";
- char *pass = "...";
+ char *connectionString = "HostName=IoTHubForYarkoba4i.azure-devices.net;DeviceId=ESP8266_temp;SharedAccessKey=OOTPq2Zv7BJQipiJV2z5n1CrD1ctqJibSSNGH8KoM5M=";
+// char *ssid = "pr500k-27a997-RPT";
+ char *ssid = "pr500k-27a997_3_RPT";
+ char *pass = "ce32fcda56211";
 
 static int interval = INTERVAL;
+
 
 void blinkLED()
 {

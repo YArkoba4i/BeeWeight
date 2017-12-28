@@ -7,13 +7,22 @@
 #define LED_PIN 5
 #define DHT_PIN 2
 
+// HX711
+#define _DOUT  0
+#define _CLK  2
+#define calibration_factor 6120 // this calibration factor is for my 200g load cell
+#define	MEASURE_TIMES	64
+
 #define TEMPERATURE_ALERT 30
 
 // Interval time(ms) for sending message to IoT Hub
-#define INTERVAL 2000
+#define INTERVAL 5000
 
 // If don't have a physical DHT sensor, can send simulated data to IoT hub
 #define SIMULATED_DATA false
+
+// If to ESP-01 connected DHT sensor = TRUE, HX711 ADC = FALSE
+#define DHT_HX711	false
 
 // EEPROM address configuration
 #define EEPROM_SIZE 512
