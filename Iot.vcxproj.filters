@@ -20,6 +20,7 @@
     <None Include="iothubClient.ino" />
     <None Include="message.ino" />
     <None Include="serialReader.ino" />
+    <None Include="setup.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.Iot.vsarduino.h">

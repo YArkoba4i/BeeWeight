@@ -112,5 +112,6 @@ typedef long __PTRDIFF_TYPE__;
 #include "iothubClient.ino"
 #include "message.ino"
 #include "serialReader.ino"
+#include "setup.ino"
 #endif
 #endif
