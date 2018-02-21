@@ -1,15 +1,23 @@
 // Physical device information for board and sensor
 #define DEVICE_ID "ESP8266 ESP-01" 
 //"SparkFun ESP8266 Thing Dev"
+
+#define calibrVcc	1.088410
+
 #define DHT_TYPE DHT22
 
 // Pin layout configuration
-#define LED_PIN 5
+
+#define LED_PIN1	12
+#define TARE_BTN_PIN 13
+
+
+#define LED_PIN 0
 #define DHT_PIN 2
 
 // HX711
-#define _DOUT  0
-#define _CLK  2
+#define _DOUT 4
+#define _CLK 5
 #define calibration_factor 6120 // this calibration factor is for my 200g load cell
 #define	MEASURE_TIMES	64
 
@@ -22,7 +30,7 @@
 #define SIMULATED_DATA false
 
 // If to ESP-01 connected DHT sensor = TRUE, HX711 ADC = FALSE
-#define DHT_HX711	false
+//#define DHT_HX711	true
 
 // EEPROM address configuration
 #define EEPROM_SIZE 512
@@ -34,3 +42,6 @@
 #define CONNECTION_STRING_LEN 256
 
 #define MESSAGE_MAX_LEN 256
+
+
+void sleep_mode(bool sleep);

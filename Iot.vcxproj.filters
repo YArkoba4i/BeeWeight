@@ -16,16 +16,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Iot.ino" />
-    <None Include="credentials.ino" />
     <None Include="iothubClient.ino" />
     <None Include="message.ino" />
     <None Include="serialReader.ino" />
+    <None Include="eeprom.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.Iot.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__vm\.BeeWaightToThingSpeak.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

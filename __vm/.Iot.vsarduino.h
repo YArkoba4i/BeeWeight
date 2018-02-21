@@ -18,8 +18,9 @@
 #define ICACHE_FLASH
 #define F_CPU 80000000L
 #define LWIP_OPEN_SRC
+#define TCP_MSS 536
 #define ARDUINO 10803
-#define ARDUINO_ESP8266_ESP01
+#define ARDUINO_ESP8266_GENERIC
 #define ARDUINO_ARCH_ESP8266
 #define ESP8266
 #define __cplusplus 201103L

@@ -27,7 +27,7 @@ const char *notFound = "\"No method found\"";
  * }
  * #endif
  */
- 
+ /*
 static void sendCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void *userContextCallback)
 {
     if (IOTHUB_CLIENT_CONFIRMATION_OK == result)
@@ -42,7 +42,7 @@ static void sendCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void *userCon
     messagePending = false;
 }
 
-static void sendMessage(IOTHUB_CLIENT_LL_HANDLE iotHubClientHandle, char *buffer, bool temperatureAlert)
+static void sendMessage( char *buffer, bool temperatureAlert)
 {
     IOTHUB_MESSAGE_HANDLE messageHandle = IoTHubMessage_CreateFromByteArray((const unsigned char *)buffer, strlen(buffer));
     if (messageHandle == NULL)
@@ -92,7 +92,7 @@ IOTHUBMESSAGE_DISPOSITION_RESULT receiveMessageCallback(IOTHUB_MESSAGE_HANDLE me
     }
     else
     {
-        /*buffer is not zero terminated*/
+        //buffer is not zero terminated
         char *temp = (char *)malloc(size + 1);
 
         if (temp == NULL)
@@ -152,3 +152,4 @@ void twinCallback(
     parseTwinMessage(temp);
     free(temp);
 }
+*/

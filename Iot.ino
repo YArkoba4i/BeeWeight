@@ -14,38 +14,40 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <WiFiUdp.h>
+#include <time.h>
 
-#include <AzureIoTHub.h>
-#include <AzureIoTProtocol_MQTT.h>
-#include <AzureIoTUtility.h>
-
-
+#include <stdlib.h>
 
 #include "config.h"
+
+ADC_MODE(ADC_VCC);
+
 
 static bool messagePending = false;
 static bool messageSending = true;
 
  char *connectionString = "HostName=IoTHubForYarkoba4i.azure-devices.net;DeviceId=ESP8266_temp;SharedAccessKey=OOTPq2Zv7BJQipiJV2z5n1CrD1ctqJibSSNGH8KoM5M=";
 // char *ssid = "pr500k-27a997-RPT";
- char *ssid = "pr500k-27a997_3_RPT";
- char *pass = "ce32fcda56211";
+
+  char *ssid = "pr500k-27a997_3_RPT";
+  char *pass = "ce32fcda56211";
+  const char *_server = "184.106.153.149"; // thingspeak.com
+
+ const int channelID = 332445;
+ const char *_APIKey = "P1SOR94TRFN6E5DM"; // write API key for your ThingSpeak Channel
+ const char *_GET = "GET https://api.thingspeak.com/update?api_key=";
 
 static int interval = INTERVAL;
+WiFiClient client;
 
+const int sleepTimeMin = 10;
 
-void blinkLED()
-{
-	digitalWrite(LED_PIN, HIGH);
-	delay(500);
-	digitalWrite(LED_PIN, LOW);
-}
 
 void initWifi()
 {
 	// Attempt to connect to Wifi network:
 	Serial.printf("Attempting to connect to SSID: %s.\r\n", ssid);
-
+	WiFi.mode(WIFI_STA);
 
 	// Connect to WPA/WPA2 network. Change this line if using open or WEP network:
 	WiFi.begin(ssid, pass);
@@ -61,6 +63,7 @@ void initWifi()
 			mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], ssid);
 		WiFi.begin(ssid, pass);
 		delay(10000);
+		//Serial.println("WiFi.RSSI() = " + String(WiFi.RSSI(),10));
 	}
 	Serial.printf("Connected to wifi %s.\r\n", ssid);
 }
@@ -87,49 +90,55 @@ void initTime()
 	}
 }
 
-static IOTHUB_CLIENT_LL_HANDLE iotHubClientHandle;
+
 void setup()
 {
-	pinMode(LED_PIN, OUTPUT);
 
 	initSerial();
 	delay(2000);
-	Serial.printf("Attempting to connect to SSID: %s.\r\n", ssid);
+
 //	readCredentials();
 
 	initWifi();
 	initTime();
 	initSensor();
 
-	/*
-	* Break changes in version 1.0.34: AzureIoTHub library removed AzureIoTClient class.
-	* So we remove the code below to avoid compile error.
-	*/
-	// initIoThubClient();
-
-	iotHubClientHandle = IoTHubClient_LL_CreateFromConnectionString(connectionString, MQTT_Protocol);
-	if (iotHubClientHandle == NULL)
-	{
-		Serial.println("Failed on IoTHubClient_CreateFromConnectionString.");
-		while (1);
-	}
-
-	IoTHubClient_LL_SetMessageCallback(iotHubClientHandle, receiveMessageCallback, NULL);
-	IoTHubClient_LL_SetDeviceMethodCallback(iotHubClientHandle, deviceMethodCallback, NULL);
-	IoTHubClient_LL_SetDeviceTwinCallback(iotHubClientHandle, twinCallback, NULL);
 }
 
-static int messageCount = 1;
+//static int messageCount = 1;
 void loop()
 {
-	if (!messagePending && messageSending)
-	{
-		char messagePayload[MESSAGE_MAX_LEN];
-		bool temperatureAlert = readMessage(messageCount, messagePayload);
-		sendMessage(iotHubClientHandle, messagePayload, temperatureAlert);
-		messageCount++;
-		delay(interval);
+
+	if (client.connect(_server, 80)) {
+
+		// Measure Signal Strength (RSSI) of Wi-Fi connection
+		//Serial.println("messageCount = " + String(messageCount));
+		delay(10000);
+		sendMessage();
+
+	
 	}
-	IoTHubClient_LL_DoWork(iotHubClientHandle);
-	delay(10);
+
+	sleep_mode(true);
+
 }
+
+
+void sleep_mode(bool sleep) {
+
+	if (sleep) {
+		//	Serial.println("Humidity: " + String(readHumidity(), 2));
+		delay(10000);
+		client.stop();
+		WiFi.disconnect();
+		HX711_OFF();
+		delay(10);
+
+		//ESP.deepSleep(20000);
+		ESP.deepSleep(sleepTimeMin * 60000000);
+				
+	}
+	
+}
+
+
