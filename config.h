@@ -7,13 +7,14 @@
 #define DHT_TYPE DHT22
 
 // Pin layout configuration
-
-#define LED_PIN1	12
 #define TARE_BTN_PIN 13
-
 
 #define LED_PIN 0
 #define DHT_PIN 2
+
+
+#define Wk_UP_Hr	6		//Wake up hour 
+#define Sleep_Hr	22		//sleep hour
 
 // HX711
 #define _DOUT 4
@@ -23,8 +24,8 @@
 
 #define TEMPERATURE_ALERT 30
 
-// Interval time(ms) for sending message to IoT Hub
-#define INTERVAL 5000
+// Interval time(mm) for sending message to IoT Hub
+#define INTERVAL 15
 
 // If don't have a physical DHT sensor, can send simulated data to IoT hub
 #define SIMULATED_DATA false
@@ -44,4 +45,4 @@
 #define MESSAGE_MAX_LEN 256
 
 
-void sleep_mode(bool sleep);
+void sleep_mode(uint8_t min);

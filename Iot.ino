@@ -14,14 +14,26 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <WiFiUdp.h>
-#include <time.h>
+
 
 #include <stdlib.h>
 
 #include "config.h"
+#include "Timing.h"
 
 ADC_MODE(ADC_VCC);
 
+struct ee_data_str {
+	int		sleep_mins;
+	float	am_wght;
+	float	min_wght;
+	uint8_t	not_wifi_cnnct_times; // should device connect to wifi after awaking: 0->connect, "n"->do not connenct, every connect n--;
+								// used for night mode
+};
+
+float inline min(float, float);
+
+struct ee_data_str ee_data;
 
 static bool messagePending = false;
 static bool messageSending = true;
@@ -29,19 +41,130 @@ static bool messageSending = true;
  char *connectionString = "HostName=IoTHubForYarkoba4i.azure-devices.net;DeviceId=ESP8266_temp;SharedAccessKey=OOTPq2Zv7BJQipiJV2z5n1CrD1ctqJibSSNGH8KoM5M=";
 // char *ssid = "pr500k-27a997-RPT";
 
-  char *ssid = "pr500k-27a997_3_RPT";
-  char *pass = "ce32fcda56211";
-  const char *_server = "184.106.153.149"; // thingspeak.com
+ char *ssid = "pr500k-27a997_3_RPT";
+ char *pass = "ce32fcda56211";
+ const char *_server = "184.106.153.149"; // thingspeak.com
 
  const int channelID = 332445;
  const char *_APIKey = "P1SOR94TRFN6E5DM"; // write API key for your ThingSpeak Channel
  const char *_GET = "GET https://api.thingspeak.com/update?api_key=";
 
-static int interval = INTERVAL;
+
+const int sleepTimeMin = 1;
+
+
+Timing tm;
 WiFiClient client;
+void initWifi();
 
-const int sleepTimeMin = 10;
 
+void setup()
+{
+
+	initSerial();
+	delay(1000);
+
+	readEEpromData();
+//	ee_data.not_wifi_cnnct_times = 0;
+
+	if (ee_data.not_wifi_cnnct_times == 0) { // it's day 
+		delay(200);
+		initSensores();
+		initWifi();
+
+		tm.initTime();
+		delay(500);
+		ee_data.sleep_mins = tm.getNextMeasuringMMLeft();
+		Serial.printf("Day ... eeprom.getNextMeasuringMMLeft = %d\n", tm.getNextMeasuringMMLeft());
+		Serial.printf("Day ... eeprom.not_wifi_cnnct_times = %d\n", ee_data.not_wifi_cnnct_times);
+	}
+	else {// it's nigth
+		//eeprom write ee_data.not_wifi_cnnct_times--;
+
+		Serial.printf("Night ... eeprom.not_wifi_cnnct_times = %d\n", ee_data.not_wifi_cnnct_times);
+		ee_data.not_wifi_cnnct_times--;
+		ee_data.sleep_mins -= 60;
+
+		WriteEEPROMData();
+		sleep_mode(sleepTimeMin);
+	}
+	
+	/*
+	if (tm.isFreshStart(tm.getTimeNow(), ee_data_str.mesure_time))
+	{
+		Serial.println("Fresh start ... erasing eeprom.");
+		EraseEEPROM();
+	}*/
+	
+}
+
+//static int messageCount = 1;
+void loop()
+{
+
+	/*
+*/
+	delay(5000);
+
+
+	// if 6am
+	if ((tm.getHH() == Wk_UP_Hr) && (tm.getMM() < 15)) {
+		
+		// saving 6 am weight to eeporm
+		ee_data.am_wght = readWeight();
+
+		WriteEEPROMData();
+		Serial.printf("6am... eeprom.sleep_mins = %d\n", ee_data.sleep_mins);
+		Serial.printf("6am... eeprom.am_wght = %f\n", ee_data.am_wght);
+		// deep sleep till next measure
+		sleep_mode(tm.getNextMeasuringMMLeft());
+
+	}// day mesurements
+	else if ((tm.getHH() >= Wk_UP_Hr) && (tm.getMM() >= 15) && (tm.getHH() < Sleep_Hr)) {
+
+		float minD = ee_data.am_wght - readWeight();
+		if (client.connect(_server, 80)) {
+
+			delay(500);
+			sendMessage(minD, NULL);
+
+		}
+
+		Serial.printf("Day... eeprom.sleep_mins = %d\n", ee_data.sleep_mins);
+		Serial.printf("Day... minD = %f\n", minD);
+	}
+	// 22 
+	if ((tm.getHH() == Sleep_Hr) && (tm.getMM() < 15)) {
+		float minD = ee_data.am_wght - readWeight();
+		float Delta = readWeight() - ee_data.am_wght;
+		if (client.connect(_server, 80)) {
+
+			delay(500);
+			sendMessage(minD, Delta);
+
+		}
+
+		//preparation for a night sleep
+		ee_data.sleep_mins = tm.getAMwkUPmins();
+		ee_data.not_wifi_cnnct_times = (uint8_t)ceil(ee_data.sleep_mins / 60);
+		WriteEEPROMData();
+
+		Serial.printf("10pm... eeprom.sleep_mins = %d\n", ee_data.sleep_mins);
+		Serial.printf("10pm... Delta = %f\n", Delta);
+
+		sleep_mode(60);
+	}
+	
+	
+	
+
+	WriteEEPROMData();
+
+
+
+	sleep_mode(ee_data.sleep_mins);
+
+}
 
 void initWifi()
 {
@@ -68,77 +191,24 @@ void initWifi()
 	Serial.printf("Connected to wifi %s.\r\n", ssid);
 }
 
-void initTime()
-{
-	time_t epochTime;
-	configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+void sleep_mode(uint8_t min) {
 
-	while (true)
-	{
-		epochTime = time(NULL);
-
-		if (epochTime == 0)
-		{
-			Serial.println("Fetching NTP epoch time failed! Waiting 2 seconds to retry.");
-			delay(2000);
-		}
-		else
-		{
-			Serial.printf("Fetched NTP epoch time is: %lu.\r\n", epochTime);
-			break;
-		}
-	}
-}
-
-
-void setup()
-{
-
-	initSerial();
-	delay(2000);
-
-//	readCredentials();
-
-	initWifi();
-	initTime();
-	initSensor();
-
-}
-
-//static int messageCount = 1;
-void loop()
-{
-
-	if (client.connect(_server, 80)) {
-
-		// Measure Signal Strength (RSSI) of Wi-Fi connection
-		//Serial.println("messageCount = " + String(messageCount));
-		delay(10000);
-		sendMessage();
-
-	
-	}
-
-	sleep_mode(true);
-
-}
-
-
-void sleep_mode(bool sleep) {
-
-	if (sleep) {
-		//	Serial.println("Humidity: " + String(readHumidity(), 2));
-		delay(10000);
+		Serial.printf("Sleep for %d min\n ", min);
+		delay(10);
 		client.stop();
 		WiFi.disconnect();
-		HX711_OFF();
+
 		delay(10);
 
 		//ESP.deepSleep(20000);
-		ESP.deepSleep(sleepTimeMin * 60000000);
-				
-	}
-	
+		ESP.deepSleep(min * 60000000);
+
+}
+
+
+
+float inline min(float amw, float mw) {
+	return ((amw < mw) ? amw : mw);
 }
 
 

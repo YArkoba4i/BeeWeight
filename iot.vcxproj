@@ -85,8 +85,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
+    <ClInclude Include="Timing.h" />
     <ClInclude Include="__vm\.BeeWaightToThingSpeak.vsarduino.h" />
     <ClInclude Include="__vm\.Iot.vsarduino.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Timing.cpp" />
   </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>
