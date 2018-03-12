@@ -23,20 +23,21 @@
 
 ADC_MODE(ADC_VCC);
 
+// Structure saived in eeprom
 struct ee_data_str {
-	int		sleep_mins;
 	float	am_wght;
-	float	min_wght;
+	int		sleep_sec;		// sllep for sleep_mins, 
+	time_t	last_measure_time;	// time of the last measurmet
 	uint8_t	not_wifi_cnnct_times; // should device connect to wifi after awaking: 0->connect, "n"->do not connenct, every connect n--;
-								// used for night mode
+							// used for night mode
 };
 
 float inline min(float, float);
 
 struct ee_data_str ee_data;
 
-static bool messagePending = false;
-static bool messageSending = true;
+//----------------------------------------------------------------------------------
+// Network connecting variables
 
  char *connectionString = "HostName=IoTHubForYarkoba4i.azure-devices.net;DeviceId=ESP8266_temp;SharedAccessKey=OOTPq2Zv7BJQipiJV2z5n1CrD1ctqJibSSNGH8KoM5M=";
 // char *ssid = "pr500k-27a997-RPT";
@@ -49,9 +50,7 @@ static bool messageSending = true;
  const char *_APIKey = "P1SOR94TRFN6E5DM"; // write API key for your ThingSpeak Channel
  const char *_GET = "GET https://api.thingspeak.com/update?api_key=";
 
-
-const int sleepTimeMin = 1;
-
+ //----------------------------------------------------------------------------------
 
 Timing tm;
 WiFiClient client;
@@ -64,29 +63,66 @@ void setup()
 	initSerial();
 	delay(1000);
 
+
+//	EraseEEPROM();
 	readEEpromData();
+	
 //	ee_data.not_wifi_cnnct_times = 0;
 
 	if (ee_data.not_wifi_cnnct_times == 0) { // it's day 
-		delay(200);
-		initSensores();
+		Serial.printf("\nDay ... \n");
+
 		initWifi();
 
 		tm.initTime();
-		delay(500);
-		ee_data.sleep_mins = tm.getNextMeasuringMMLeft();
-		Serial.printf("Day ... eeprom.getNextMeasuringMMLeft = %d\n", tm.getNextMeasuringMMLeft());
-		Serial.printf("Day ... eeprom.not_wifi_cnnct_times = %d\n", ee_data.not_wifi_cnnct_times);
+		
+		if (tm.getTimeNow() < ee_data.last_measure_time)
+		{
+			Serial.println("Wrong time... Waiting for initTime ... ");
+			for (uint i = 5; i >= 0; i--) {
+				tm.initTime();
+				delay(3000);
+				if (tm.getTimeNow() > ee_data.last_measure_time)
+					break;
+				else
+					ESP.reset();
+			}
+
+		}
+
+		if (tm.isDay()) {
+			Serial.println("Initalizing sensors");
+			uint8_t i = 5;
+			while(!initSensores() || i==0){
+				Serial.print(".");
+				i--;
+				delay(500);
+			}
+
+		}
+		else {		//preparation for a night sleep
+			
+			ee_data.sleep_sec = tm.getAMwkUPmins();
+			ee_data.not_wifi_cnnct_times = (uint8_t)ceil(ee_data.sleep_sec / 360);
+			WriteEEPROMData();
+
+			Serial.printf("\n Not day... falling asleep for %d min\n", ee_data.sleep_sec/60);
+
+			sleep_sec_mode(360);
+		}
 	}
 	else {// it's nigth
-		//eeprom write ee_data.not_wifi_cnnct_times--;
+		//eeprom write ee_data.not_wifi_cnnct_times--
 
-		Serial.printf("Night ... eeprom.not_wifi_cnnct_times = %d\n", ee_data.not_wifi_cnnct_times);
+		
 		ee_data.not_wifi_cnnct_times--;
-		ee_data.sleep_mins -= 60;
+		ee_data.sleep_sec -= 360;
+		Serial.printf("Night ... sleep minutes left = %d\n", ee_data.sleep_sec);
+		Serial.printf("Night ... wake up's left = %d\n", ee_data.not_wifi_cnnct_times);
 
+	
 		WriteEEPROMData();
-		sleep_mode(sleepTimeMin);
+		sleep_sec_mode(360);
 	}
 	
 	/*
@@ -97,79 +133,140 @@ void setup()
 	}*/
 	
 }
-
-//static int messageCount = 1;
+//----------------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------------
 void loop()
 {
-
-	/*
-*/
-	delay(5000);
+	time_t timenow = tm.getTimeNow();
+	tm.printTimeNow();
 
 
-	// if 6am
-	if ((tm.getHH() == Wk_UP_Hr) && (tm.getMM() < 15)) {
+	delay(500);
+
+	//----------------------------------------------------------------------------------
+	//		// if 6am
+	//----------------------------------------------------------------------------------
+	
+	if (tm.isWakeUPHour()) {
 		
 		// saving 6 am weight to eeporm
 		ee_data.am_wght = readWeight();
+		ee_data.last_measure_time = tm.getTimeNow();
 
-		WriteEEPROMData();
-		Serial.printf("6am... eeprom.sleep_mins = %d\n", ee_data.sleep_mins);
+		sendMessage(NULL, NULL);
+
+//		Serial.printf("6am... eeprom.sleep_sec = %d\n", ee_data.sleep_sec);
 		Serial.printf("6am... eeprom.am_wght = %f\n", ee_data.am_wght);
-		// deep sleep till next measure
-		sleep_mode(tm.getNextMeasuringMMLeft());
 
-	}// day mesurements
-	else if ((tm.getHH() >= Wk_UP_Hr) && (tm.getMM() >= 15) && (tm.getHH() < Sleep_Hr)) {
+		// deep sleep till next measure
+		ee_data.sleep_sec = tm.getNextMeasuringSecLeft();
+
+	}
+
+	//----------------------------------------------------------------------------------
+	//		// day mesurements
+	//----------------------------------------------------------------------------------
+
+	else if (tm.isDayHours()) {
 
 		float minD = ee_data.am_wght - readWeight();
-		if (client.connect(_server, 80)) {
+		ee_data.last_measure_time = tm.getTimeNow();
 
-			delay(500);
-			sendMessage(minD, NULL);
+		sendMessage(minD, NULL);
 
-		}
+		ee_data.sleep_sec = tm.getNextMeasuringSecLeft();
 
-		Serial.printf("Day... eeprom.sleep_mins = %d\n", ee_data.sleep_mins);
+
 		Serial.printf("Day... minD = %f\n", minD);
+
 	}
-	// 22 
-	if ((tm.getHH() == Sleep_Hr) && (tm.getMM() < 15)) {
+	
+	//----------------------------------------------------------------------------------
+	//	// night 10 pm
+	//----------------------------------------------------------------------------------
+
+	else if // > 21:45 & 22:59 <
+		(tm.isSleepHour()) {
+
 		float minD = ee_data.am_wght - readWeight();
 		float Delta = readWeight() - ee_data.am_wght;
-		if (client.connect(_server, 80)) {
 
-			delay(500);
-			sendMessage(minD, Delta);
+		sendMessage(minD, Delta);
 
-		}
 
 		//preparation for a night sleep
-		ee_data.sleep_mins = tm.getAMwkUPmins();
-		ee_data.not_wifi_cnnct_times = (uint8_t)ceil(ee_data.sleep_mins / 60);
-		WriteEEPROMData();
+		ee_data.sleep_sec = tm.getAMWakeUPSecons();
 
-		Serial.printf("10pm... eeprom.sleep_mins = %d\n", ee_data.sleep_mins);
+		ee_data.last_measure_time = tm.getTimeNow();
+		ee_data.not_wifi_cnnct_times = (uint8_t)ceil(ee_data.sleep_sec / 3600);
+
 		Serial.printf("10pm... Delta = %f\n", Delta);
 
-		sleep_mode(60);
+		WriteEEPROMData();
+		sleep_sec_mode(3600);
 	}
 	
-	
-	
+
 
 	WriteEEPROMData();
 
+	sleep_sec_mode(ee_data.sleep_sec);
+	
+}
+//----------------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------------
 
+void sleep_mode(uint8_t min) {
 
-	sleep_mode(ee_data.sleep_mins);
+	Serial.printf("Sleep for %d min\n ", min);
+	delay(10);
+	if (WiFi.isConnected()) {
+		client.stop();
+		WiFi.disconnect();
+	}
+
+	delay(10);
+
+	//ESP.deepSleep(20000);
+	ESP.deepSleep(min * 60000000);
 
 }
+void sleep_sec_mode(uint32_t sec) {
 
+	Serial.printf("Sleep for %d sec\n ", sec);
+	
+	delay(10);
+	if (WiFi.isConnected()) {
+		client.stop();
+		WiFi.disconnect();
+	}
+
+	delay(10);
+//	sec = 5;
+
+//	ESP.deepSleep(sec * 100000);
+	ESP.deepSleep(sec * 1000000);
+	
+}
+void reset() {
+	Serial.println("..... reset ......");
+
+	delay(10);
+	if (WiFi.isConnected()) {
+		client.stop();
+		WiFi.disconnect();
+	}
+	ESP.reset();
+}
+//----------------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------------
 void initWifi()
 {
 	// Attempt to connect to Wifi network:
-	Serial.printf("Attempting to connect to SSID: %s.\r\n", ssid);
+	//Serial.printf("Attempting to connect to SSID: %s.\r\n", ssid);
 	WiFi.mode(WIFI_STA);
 
 	// Connect to WPA/WPA2 network. Change this line if using open or WEP network:
@@ -182,31 +279,18 @@ void initWifi()
 		// start from mac[0] to mac[5], but some other kinds of board run in the oppsite direction.
 		uint8_t mac[6];
 		WiFi.macAddress(mac);
-		Serial.printf("You device with MAC address %02x:%02x:%02x:%02x:%02x:%02x connects to %s failed! Waiting 10 seconds to retry.\r\n",
-			mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], ssid);
+		//Serial.printf("You device with MAC address %02x:%02x:%02x:%02x:%02x:%02x connects to %s failed! Waiting 10 seconds to retry.\r\n",
+		//	mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], ssid);
 		WiFi.begin(ssid, pass);
 		delay(10000);
 		//Serial.println("WiFi.RSSI() = " + String(WiFi.RSSI(),10));
 	}
-	Serial.printf("Connected to wifi %s.\r\n", ssid);
+	Serial.printf("Connected to wifi %s.....\r\n", ssid);
 }
 
-void sleep_mode(uint8_t min) {
-
-		Serial.printf("Sleep for %d min\n ", min);
-		delay(10);
-		client.stop();
-		WiFi.disconnect();
-
-		delay(10);
-
-		//ESP.deepSleep(20000);
-		ESP.deepSleep(min * 60000000);
-
-}
-
-
-
+//----------------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------------
 float inline min(float amw, float mw) {
 	return ((amw < mw) ? amw : mw);
 }
