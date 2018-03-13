@@ -1,7 +1,6 @@
 #include "Timing.h"
 
 
-
 Timing::Timing()
 {
 }
@@ -14,7 +13,7 @@ Timing::~Timing()
 //
 //----------------------------------------------------------------------------------
 void Timing::initTime() {
-	configTime(3600*9, 0, "pool.ntp.org", "time.nist.gov");
+	configTime(3600*9, 0, "jp.pool.ntp.org", "pool.ntp.org", "time.nist.gov");// ua.pool.ntp.org
 	//Serial.println("\nWaiting for time");
 
 	uint8_t i = 5;
@@ -30,7 +29,7 @@ void Timing::initTime() {
 	if (!time(NULL))
 	{
 		Serial.println("Reset.....");
-		ESP.reset();
+		reset();
 	}
 
 	/*
@@ -243,7 +242,7 @@ bool Timing::isDayHours() {
 
 
 	if (((getHH() == Wk_UP_Hr) && (getMM() >= 10)) // > 06:10 & 07:00 <
-		|| ((getHH() > Wk_UP_Hr) && (getHH() < Sleep_Hr)) // > 6:00 & 22:00 <
+		|| ((getHH() > Wk_UP_Hr) && (getHH() < Sleep_Hr-1)) // > 6:00 & 21:00 <
 		|| ((getHH() == (Sleep_Hr-1)) && (getMM() <= 50))) // 21:50 <=
 	{
 		return true;

@@ -85,7 +85,7 @@ void setup()
 				if (tm.getTimeNow() > ee_data.last_measure_time)
 					break;
 				else
-					ESP.reset();
+					reset();
 			}
 
 		}
@@ -108,7 +108,7 @@ void setup()
 
 			Serial.printf("\n Not day... falling asleep for %d min\n", ee_data.sleep_sec/60);
 
-			sleep_sec_mode(360);
+			sleep_sec_mode(3600);
 		}
 	}
 	else {// it's nigth
@@ -116,13 +116,13 @@ void setup()
 
 		
 		ee_data.not_wifi_cnnct_times--;
-		ee_data.sleep_sec -= 360;
+		ee_data.sleep_sec -= 3600;
 		Serial.printf("Night ... sleep minutes left = %d\n", ee_data.sleep_sec);
 		Serial.printf("Night ... wake up's left = %d\n", ee_data.not_wifi_cnnct_times);
 
 	
 		WriteEEPROMData();
-		sleep_sec_mode(360);
+		sleep_sec_mode(3600);
 	}
 	
 	/*
@@ -233,6 +233,9 @@ void sleep_mode(uint8_t min) {
 	ESP.deepSleep(min * 60000000);
 
 }
+//----------------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------------
 void sleep_sec_mode(uint32_t sec) {
 
 	Serial.printf("Sleep for %d sec\n ", sec);
@@ -250,6 +253,9 @@ void sleep_sec_mode(uint32_t sec) {
 	ESP.deepSleep(sec * 1000000);
 	
 }
+//----------------------------------------------------------------------------------
+//
+//----------------------------------------------------------------------------------
 void reset() {
 	Serial.println("..... reset ......");
 
@@ -258,8 +264,10 @@ void reset() {
 		client.stop();
 		WiFi.disconnect();
 	}
+	delay(100);
 	ESP.reset();
 }
+
 //----------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------

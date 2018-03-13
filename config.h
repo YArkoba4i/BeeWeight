@@ -47,3 +47,4 @@
 
 void sleep_mode(uint8_t min);
 void sleep_sec_mode(uint32_t sec);
+void reset();
