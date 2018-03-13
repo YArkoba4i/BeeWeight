@@ -42,12 +42,12 @@ struct ee_data_str ee_data;
  char *connectionString = "HostName=IoTHubForYarkoba4i.azure-devices.net;DeviceId=ESP8266_temp;SharedAccessKey=OOTPq2Zv7BJQipiJV2z5n1CrD1ctqJibSSNGH8KoM5M=";
 // char *ssid = "pr500k-27a997-RPT";
 
- char *ssid = "pr500k-27a997_3_RPT";
- char *pass = "ce32fcda56211";
+ char *ssid = "***";
+ char *pass = "***";
  const char *_server = "184.106.153.149"; // thingspeak.com
 
- const int channelID = 332445;
- const char *_APIKey = "P1SOR94TRFN6E5DM"; // write API key for your ThingSpeak Channel
+ const int channelID = ***;
+ const char *_APIKey = "***"; // write API key for your ThingSpeak Channel
  const char *_GET = "GET https://api.thingspeak.com/update?api_key=";
 
  //----------------------------------------------------------------------------------
