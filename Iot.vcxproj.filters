@@ -34,9 +34,15 @@
     <ClInclude Include="Timing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RTCmemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Timing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RTCmemory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

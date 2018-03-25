@@ -47,16 +47,17 @@ bool initSensores()
 		scale.set_scale(calibration_factor); //This value is obtained by using the SparkFun_HX711_Calibration sketch
 											 //scale.tare(); //Assuming there is no weight on the scale at start up, reset the scale to 0
 		scale.power_up();
-
+		delay(500);
 		//scale.set_gain(128);
 		if (scale.is_ready()) {
-//			Serial.println("scale.is_ready:");
+			Serial.println("scale.is_ready:");
 			return true;
 		}
 		else
 		{
-//			Serial.println("scale.is_NOT_ready:");
-			scale.power_down(); delay(500);
+			Serial.println("scale.is_NOT_ready:");
+			scale.power_down(); 
+			delay(2000);
 		}
 	}
 

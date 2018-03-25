@@ -1,3 +1,23 @@
+// Please use an Arduino IDE 1.6.8 or greater
+
+#include <WiFiServer.h>
+#include <WiFiClient.h>
+#include <ESP8266WiFiType.h>
+#include <ESP8266WiFiSTA.h>
+#include <ESP8266WiFiScan.h>
+#include <ESP8266WiFiMulti.h>
+#include <ESP8266WiFiGeneric.h>
+#include <ESP8266WiFiAP.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+#include <WiFiUdp.h>
+
+
+#include <stdlib.h>
+
+#include <Arduino.h>
+#include <stdint.h>
+
 // Physical device information for board and sensor
 #define DEVICE_ID "ESP8266 ESP-01" 
 //"SparkFun ESP8266 Thing Dev"
@@ -7,7 +27,6 @@
 #define DHT_TYPE DHT22
 
 // Pin layout configuration
-#define TARE_BTN_PIN 13
 
 #define LED_PIN 0
 #define DHT_PIN 2
@@ -44,6 +63,13 @@
 
 #define MESSAGE_MAX_LEN 256
 
+void initWifi();
+
+void WriteRTCmemData();
+void readRTCmemData();
+void EraseRTSmemStr();
+bool isfirstRTCmemwrite();
+void setRTCmemFlag(uint32_t flag);
 
 void sleep_mode(uint8_t min);
 void sleep_sec_mode(uint32_t sec);

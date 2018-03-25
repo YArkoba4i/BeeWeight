@@ -1,25 +1,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// Please use an Arduino IDE 1.6.8 or greater
-
-#include <WiFiServer.h>
-#include <WiFiClient.h>
-#include <ESP8266WiFiType.h>
-#include <ESP8266WiFiSTA.h>
-#include <ESP8266WiFiScan.h>
-#include <ESP8266WiFiMulti.h>
-#include <ESP8266WiFiGeneric.h>
-#include <ESP8266WiFiAP.h>
-#include <ESP8266WiFi.h>
-#include <WiFiClientSecure.h>
-#include <WiFiUdp.h>
 
 
-#include <stdlib.h>
+
+
 
 #include "config.h"
 #include "Timing.h"
+//#include "RTCmemory.h"
 
 ADC_MODE(ADC_VCC);
 
@@ -29,12 +18,16 @@ struct ee_data_str {
 	int		sleep_sec;		// sllep for sleep_mins, 
 	time_t	last_measure_time;	// time of the last measurmet
 	uint8_t	not_wifi_cnnct_times; // should device connect to wifi after awaking: 0->connect, "n"->do not connenct, every connect n--;
-							// used for night mode
-};
+								  // used for night mode
+}ee_data;
+
+#define FLAG_ADR	64
+#define START_ADR	65 
+
 
 float inline min(float, float);
 
-struct ee_data_str ee_data;
+
 
 //----------------------------------------------------------------------------------
 // Network connecting variables
@@ -42,8 +35,11 @@ struct ee_data_str ee_data;
  char *connectionString = "HostName=IoTHubForYarkoba4i.azure-devices.net;DeviceId=ESP8266_temp;SharedAccessKey=OOTPq2Zv7BJQipiJV2z5n1CrD1ctqJibSSNGH8KoM5M=";
 // char *ssid = "pr500k-27a997-RPT";
 
- char *ssid = "pr500k-27a997_3_RPT";
- char *pass = "ce32fcda56211";
+
+ char *ssid = "TP-LINK_5CF5A4";
+ char *pass = "60024060";
+// char *ssid = "pr500k-27a997_3_RPT";
+ //char *pass = "ce32fcda56211";
  const char *_server = "184.106.153.149"; // thingspeak.com
 
  const int channelID = 332445;
@@ -51,21 +47,55 @@ struct ee_data_str ee_data;
  const char *_GET = "GET https://api.thingspeak.com/update?api_key=";
 
  //----------------------------------------------------------------------------------
-
 Timing tm;
-WiFiClient client;
-void initWifi();
+//RTCmemory rtcMem;
+//WiFiClient client;
 
 
 void setup()
 {
-
 	initSerial();
 	delay(1000);
 
+	Serial.println("Initalizing sensors");
+	
+	initSensores();
 
-//	EraseEEPROM();
-	readEEpromData();
+
+
+}
+
+void loop() {
+
+}
+
+
+/*
+void setup()
+{
+	//tm.initTime();
+
+	initSerial();
+	delay(1000);
+	
+	
+	EraseRTSmemStr();
+
+	// checking the memory
+	if (!isfirstRTCmemwrite()) {
+		Serial.println("\nNot first time");
+		readRTCmemData();
+		Serial.printf("ee_data_str.am_wght = %f\n", ee_data.am_wght);
+		Serial.printf("ee_data_str.not_wifi_cnnct_times = %lu\n", ee_data.not_wifi_cnnct_times);
+		Serial.printf("ee_data_str.sleep_sec = %d\n", ee_data.sleep_sec);
+		Serial.printf("ee_data_str.last_measure_time = %d\n", ee_data.last_measure_time);
+	}
+	else { // if it's firs run. Setting up the structure
+		Serial.println("\nFirst time");
+		setRTCmemFlag(0xffffffff);
+	}
+	
+	//readEEpromData();
 	
 //	ee_data.not_wifi_cnnct_times = 0;
 
@@ -93,18 +123,17 @@ void setup()
 		if (tm.isDay()) {
 			Serial.println("Initalizing sensors");
 			uint8_t i = 5;
-			while(!initSensores() || i==0){
-				Serial.print(".");
-				i--;
-				delay(500);
-			}
+			if (!initSensores())
+				reset();
+
 
 		}
 		else {		//preparation for a night sleep
 			
 			ee_data.sleep_sec = tm.getAMwkUPmins();
 			ee_data.not_wifi_cnnct_times = (uint8_t)ceil(ee_data.sleep_sec / 360);
-			WriteEEPROMData();
+			WriteRTCmemData();
+			//WriteEEPROMData();
 
 			Serial.printf("\n Not day... falling asleep for %d min\n", ee_data.sleep_sec/60);
 
@@ -120,17 +149,17 @@ void setup()
 		Serial.printf("Night ... sleep minutes left = %d\n", ee_data.sleep_sec);
 		Serial.printf("Night ... wake up's left = %d\n", ee_data.not_wifi_cnnct_times);
 
-	
-		WriteEEPROMData();
+		WriteRTCmemData();
+		//WriteEEPROMData();
 		sleep_sec_mode(3600);
 	}
 	
-	/*
-	if (tm.isFreshStart(tm.getTimeNow(), ee_data_str.mesure_time))
-	{
-		Serial.println("Fresh start ... erasing eeprom.");
-		EraseEEPROM();
-	}*/
+	
+	//if (tm.isFreshStart(tm.getTimeNow(), ee_data_str.mesure_time))
+	//{
+	//	Serial.println("Fresh start ... erasing eeprom.");
+	//	EraseEEPROM();
+	//}
 	
 }
 //----------------------------------------------------------------------------------
@@ -138,11 +167,9 @@ void setup()
 //----------------------------------------------------------------------------------
 void loop()
 {
-	time_t timenow = tm.getTimeNow();
-	tm.printTimeNow();
-
-
-	delay(500);
+	
+	tm.DisplayTime();
+	tm.printTime(tm.UnixTimestamp());
 
 	//----------------------------------------------------------------------------------
 	//		// if 6am
@@ -152,7 +179,7 @@ void loop()
 		
 		// saving 6 am weight to eeporm
 		ee_data.am_wght = readWeight();
-		ee_data.last_measure_time = tm.getTimeNow();
+		ee_data.last_measure_time = tm.UnixTimestamp();
 
 		sendMessage(NULL, NULL);
 
@@ -171,7 +198,7 @@ void loop()
 	else if (tm.isDayHours()) {
 
 		float minD = ee_data.am_wght - readWeight();
-		ee_data.last_measure_time = tm.getTimeNow();
+		ee_data.last_measure_time = tm.UnixTimestamp();
 
 		sendMessage(minD, NULL);
 
@@ -198,22 +225,27 @@ void loop()
 		//preparation for a night sleep
 		ee_data.sleep_sec = tm.getAMWakeUPSecons();
 
-		ee_data.last_measure_time = tm.getTimeNow();
+		ee_data.last_measure_time = tm.UnixTimestamp();
 		ee_data.not_wifi_cnnct_times = (uint8_t)ceil(ee_data.sleep_sec / 3600);
 
 		Serial.printf("10pm... Delta = %f\n", Delta);
 
-		WriteEEPROMData();
+		WriteRTCmemData();
+		
 		sleep_sec_mode(3600);
 	}
 	
 
-
-	WriteEEPROMData();
+	WriteRTCmemData();
+	//WriteEEPROMData();
 
 	sleep_sec_mode(ee_data.sleep_sec);
 	
 }
+*/
+
+
+
 //----------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------
@@ -230,7 +262,7 @@ void sleep_mode(uint8_t min) {
 	delay(10);
 
 	//ESP.deepSleep(20000);
-	ESP.deepSleep(min * 60000000);
+	ESP.deepSleep(min * 60000000, RF_DISABLED);
 
 }
 //----------------------------------------------------------------------------------
@@ -247,10 +279,10 @@ void sleep_sec_mode(uint32_t sec) {
 	}
 
 	delay(10);
-//	sec = 5;
+	sec = 5;
 
-//	ESP.deepSleep(sec * 100000);
-	ESP.deepSleep(sec * 1000000);
+//	ESP.deepSleep(sec * 100000, WAKE_RF_DEFAULT);
+	ESP.deepSleep(sec * 1000000, WAKE_NO_RFCAL);
 	
 }
 //----------------------------------------------------------------------------------
@@ -280,7 +312,8 @@ void initWifi()
 	// Connect to WPA/WPA2 network. Change this line if using open or WEP network:
 	WiFi.begin(ssid, pass);
 	//WiFi.begin("pr500k-27a997-RPT", "ce32fcda56211");
-	while (WiFi.status() != WL_CONNECTED)
+	int i = 5;
+	while ((WiFi.status() != WL_CONNECTED) || (i==0))
 	{
 		// Get Mac Address and show it.
 		// WiFi.macAddress(mac) save the mac address into a six length array, but the endian may be different. The huzzah board should
@@ -292,9 +325,11 @@ void initWifi()
 		WiFi.begin(ssid, pass);
 		delay(10000);
 		//Serial.println("WiFi.RSSI() = " + String(WiFi.RSSI(),10));
+		i--;
 	}
 	Serial.printf("Connected to wifi %s.....\r\n", ssid);
 }
+
 
 //----------------------------------------------------------------------------------
 //

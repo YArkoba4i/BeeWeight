@@ -13,45 +13,12 @@ Timing::~Timing()
 //
 //----------------------------------------------------------------------------------
 void Timing::initTime() {
-	configTime(3600*9, 0, "jp.pool.ntp.org", "pool.ntp.org", "time.nist.gov");// ua.pool.ntp.org
-	//Serial.println("\nWaiting for time");
 
-	uint8_t i = 5;
-	while (!time(NULL) || i != 0) {
-		Serial.print(".");
-		delay(500);
-		i--;
-	}
+	TwoWire twr;
+
+	twr.begin();
 	
 
-
-
-	if (!time(NULL))
-	{
-		Serial.println("Reset.....");
-		reset();
-	}
-
-	/*
-	while (true)
-	{
-		time_t  time_now = time(NULL);
-
-		if (time_now == 0)
-		{
-			Serial.println("Fetching NTP epoch time failed! Waiting 2 seconds to retry.");
-			delay(2000);
-		}
-		else
-		{
-			//Serial.printf("Fetched NTP epoch time is: %lld.\r\n", (long long)time_now);
-			printTimeNow();
-			break;
-
-		}
-		
-	}*/
-	delay(500);
 }
 
 
@@ -341,7 +308,7 @@ uint Timing::getNextMeasuringSecLeft() {
 }*/
 
 //----------------------------------------------------------------------------------
-//
+//	
 //----------------------------------------------------------------------------------
 uint Timing::getNextMeasuringSecLeft() {
 
@@ -392,7 +359,7 @@ uint Timing::getNextMeasuringSecLeft() {
 }
 
 //----------------------------------------------------------------------------------
-//
+//	getNextMeasuringSecLeft
 //----------------------------------------------------------------------------------
 uint Timing::getNextMeasuringSecLeft(uint8_t hour, uint8_t minute) {
 
@@ -435,15 +402,8 @@ uint Timing::getNextMeasuringSecLeft(uint8_t hour, uint8_t minute) {
 	}
 }
 //----------------------------------------------------------------------------------
-//
+//	printTime(time_t time)
 //----------------------------------------------------------------------------------
 void Timing::printTime(time_t time) {
 	Serial.printf("%s\n", asctime(gmtime(&time)));
-}
-//----------------------------------------------------------------------------------
-//
-//----------------------------------------------------------------------------------
-void Timing::printTimeNow() {
-	time_t time = getTimeNow();
-	Serial.printf("\n%s\n", asctime(gmtime(&time)));
 }

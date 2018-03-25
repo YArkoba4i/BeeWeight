@@ -1,12 +1,14 @@
 #pragma once
 #include <time.h>
-#include <stdint.h>
-#include <Arduino.h>
+
+
+#include <Wire.h>
+#include <RTC_DS1307.h>
 
 #include "config.h"
 
 
-class Timing
+class Timing : public RTC_DS1307
 {
 private:
 	const uint two_days = 115200;
@@ -14,7 +16,7 @@ public:
 	Timing();
 	~Timing();
 	void initTime();
-	void printTimeNow();
+	
 	void printTime(time_t time);
 	time_t getTimeNow();
 	uint16_t getYear();
