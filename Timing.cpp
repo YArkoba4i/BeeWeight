@@ -34,6 +34,8 @@ uint8_t Timing::getHH() {
 
 	rtc.GetTime(0,0,&hh,0,0,0,0);
 
+	Serial.printf("hour = %d",hh);
+
 	return hh;
 }
 

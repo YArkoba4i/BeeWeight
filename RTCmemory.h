@@ -25,6 +25,7 @@ public:
 	ee_data_str * ee_data;
 	RTCmemory();
 	~RTCmemory();
+	void readRTCmemData();
 	void WriteRTCmemData();
 	void EraseRTSmemStr();
 	bool isfirstRTCmemwrite();

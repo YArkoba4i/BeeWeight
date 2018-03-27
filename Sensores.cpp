@@ -79,7 +79,7 @@ float Sensores::readHumidity()
 float Sensores::readWeight()
 {
 
-	return this->scale->get_units(MEASURE_TIMES) - 20.74;
+	return this->scale->get_units(MEASURE_TIMES);// -20.74;
 }
 
 

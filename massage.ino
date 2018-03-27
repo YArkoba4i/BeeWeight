@@ -23,9 +23,10 @@ void sendMessage(WiFiClient *client, Sensores *sensor, float minDelta, float Del
 		float temp = sensor->readTemperature();
 		float humid = sensor->readHumidity();
 		float weight = sensor->readWeight();
+		float voltage = sensor->getVoltage();
 
 		// switch off HX711 to save power consumtion 
-		sensor->HX711_OFF();
+//		sensor->HX711_OFF();
 
 		Serial.println("\n*****Sending Message*****\n");
 
@@ -44,7 +45,7 @@ void sendMessage(WiFiClient *client, Sensores *sensor, float minDelta, float Del
 			cmd += "&field1=" + String(temp, 2);			// field 1 = Temperature
 			cmd += "&field2=" + String(humid, 2);			// field 2 = Humidity
 			cmd += "&field3=" + String(weight, 2);			// field 3 = Weight
-			cmd += "&field4=" + String(sensor->getVoltage(), 2);	// field 4 = Vcc
+			cmd += "&field4=" + String(voltage, 2);	// field 4 = Vcc
 			cmd += "&field5=" + String(minDelta, 2);		// field 5 = minDelta = weight at 06:00 - readWeight() (every INTERVAL)
 			cmd += "\r\n";
 		}/// morning
@@ -52,7 +53,7 @@ void sendMessage(WiFiClient *client, Sensores *sensor, float minDelta, float Del
 			cmd += "&field1=" + String(temp, 2);			// field 1 = Temperature
 			cmd += "&field2=" + String(humid, 2);			// field 2 = Humidity
 			cmd += "&field3=" + String(weight, 2);			// field 3 = Weight
-			cmd += "&field4=" + String(sensor->getVoltage(), 2);	// field 4 = Vcc
+			cmd += "&field4=" + String(voltage, 2);	// field 4 = Vcc
 			cmd += "\r\n";
 		}
 		else	///	evening	
@@ -60,14 +61,14 @@ void sendMessage(WiFiClient *client, Sensores *sensor, float minDelta, float Del
 			cmd += "&field1=" + String(temp, 2);			// field 1 = Temperature
 			cmd += "&field2=" + String(humid, 2);			// field 2 = Humidity
 			cmd += "&field3=" + String(weight, 2);			// field 3 = Weight
-			cmd += "&field4=" + String(sensor->getVoltage(), 2);	// field 4 = Vcc
+			cmd += "&field4=" + String(voltage, 2);	// field 4 = Vcc
 			cmd += "&field5=" + String(minDelta, 2);		// field 5 = minDelta = weight at 06:00 - readWeight() (every INTERVAL)
 			cmd += "&field6=" + String(Delta, 2);			// field 6 = Delta = Weight at 22:00 - weight at 06:00
 			cmd += "\r\n";
 		}
 
 
-		int send_size = client->print(cmd);
+		//int send_size = client->print(cmd);
 
 		//	Serial.printf("Send size = %i,  cmd size = %i \n",send_size, sizeof(cmd));
 
