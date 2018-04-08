@@ -2,21 +2,29 @@
 #include <time.h>
 
 
+#include <RtcDS1307.h>
 #include <Wire.h>
-#include <RTC_DS1307.h>
-
 #include "config.h"
 
+#define countof(a) (sizeof(a) / sizeof(a[0]))
+//RtcDS1307<TwoWire> Rtc(Wire);
 
-class Timing : public RTC_DS1307
+
+
+class Timing : RtcDS1307<TwoWire>
 {
 private:
+	
 	const uint two_days = 115200;
+
 public:
 	Timing();
 	~Timing();
 
+	void initTime();
+	
 	void printTime(time_t time);
+	void printDateTime(const RtcDateTime& dt);
 	time_t getTimeNow();
 	uint8_t getHH();
 	uint8_t getMM();

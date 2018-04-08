@@ -11,6 +11,7 @@
 #define DEVICE_ID "ESP8266 ESP-01" 
 //"SparkFun ESP8266 Thing Dev"
 
+
 #define calibrVcc	1.088410
 
 #define DHT_TYPE DHT22
@@ -18,8 +19,8 @@
 // Pin layout configuration
 
 #define LED_PIN 0
-#define DHT_PIN 2
-
+//#define DHT_PIN 2
+#define DHT_PIN 8
 
 #define Wk_UP_Hr	6		//Wake up hour 
 #define Sleep_Hr	22		//sleep hour
@@ -29,10 +30,11 @@
 //#define _CLK 5
 
 #define _DOUT 12
-#define _CLK 14
+#define _CLK 13
 
-#define calibration_factor 6120 // this calibration factor is for my 200g load cell
-#define	MEASURE_TIMES	64
+//#define calibration_factor 6120 // this calibration factor is for my 200g load cell
+#define calibration_factor -3781000
+#define	MEASURE_TIMES	16
 
 #define TEMPERATURE_ALERT 30
 

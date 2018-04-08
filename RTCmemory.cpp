@@ -4,13 +4,13 @@
 
 RTCmemory::RTCmemory()
 {
-	ee_data = new ee_data_str;
+	this->ee_data = new ee_data_str;
 }
 
 
 RTCmemory::~RTCmemory()
 {
-	delete ee_data;
+	delete this->ee_data;
 }
 
 //----------------------------------------------------------------------------------
@@ -22,11 +22,11 @@ void RTCmemory::readRTCmemData()
 {
 
 	Serial.println("ReadRTCmemData");
-	system_rtc_mem_read(START_ADR, ee_data, sizeof(ee_data_str));
+	system_rtc_mem_read(START_ADR, this->ee_data, sizeof(ee_data_str));
 
-	Serial.printf("ee_data_str.am_wght = %f\n", ee_data->am_wght);
-	Serial.printf("ee_data_str.not_wifi_cnnct_times = %lu\n", ee_data->not_wifi_cnnct_times);
-	Serial.printf("ee_data_str.sleep_sec = %d\n", ee_data->sleep_sec);
+	Serial.printf("ee_data_str.am_wght = %f\n", this->ee_data->am_wght);
+	Serial.printf("ee_data_str.not_wifi_cnnct_times = %lu\n", this->ee_data->not_wifi_cnnct_times);
+	Serial.printf("ee_data_str.sleep_sec = %d\n", this->ee_data->sleep_sec);
 
 
 
@@ -42,7 +42,7 @@ void RTCmemory::WriteRTCmemData()
 	Serial.println("WriteRTCmemData");
 
 
-	system_rtc_mem_write(START_ADR, ee_data, sizeof(ee_data_str));
+	system_rtc_mem_write(START_ADR, this->ee_data, sizeof(ee_data_str));
 	Serial.println("WriteRTCmemData");
 
 }
@@ -53,11 +53,11 @@ void RTCmemory::WriteRTCmemData()
 void RTCmemory::EraseRTSmemStr()
 {
 
-	ee_data->am_wght = 0;
-	ee_data->last_measure_time = 0;
-	ee_data->not_wifi_cnnct_times = 0;
-	ee_data->sleep_sec = 0;
-	system_rtc_mem_write(START_ADR, ee_data, sizeof(ee_data_str));
+	this->ee_data->am_wght = 0;
+	this->ee_data->last_measure_time = 0;
+	this->ee_data->not_wifi_cnnct_times = 0;
+	this->ee_data->sleep_sec = 0;
+	system_rtc_mem_write(START_ADR, this->ee_data, sizeof(ee_data_str));
 
 
 }

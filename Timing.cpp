@@ -1,11 +1,11 @@
 #include "Timing.h"
 
 
-Timing::Timing()
+Timing::Timing() : RtcDS1307<TwoWire>(Wire)
 {
-	TwoWire twr;
 
-	twr.begin();
+	Wire.begin();
+
 }
 
 
@@ -13,14 +13,25 @@ Timing::~Timing()
 {
 }
 
+void Timing::initTime() {
+
+	
+	this->Begin();
+
+
+}
+
+
 
 //----------------------------------------------------------------------------------
 // getTimeNow(
 //----------------------------------------------------------------------------------
 time_t Timing::getTimeNow() {
-	RTC_DS1307 rtc;
 	
-	return rtc.UnixTimestamp();
+	RtcDateTime now = this->GetDateTime();
+	return  now.Epoch64Time();
+
+
 }
 
 //----------------------------------------------------------------------------------
@@ -28,15 +39,10 @@ time_t Timing::getTimeNow() {
 //----------------------------------------------------------------------------------
 uint8_t Timing::getHH() {
 
-	byte hh;
 
-	RTC_DS1307 rtc;
-
-	rtc.GetTime(0,0,&hh,0,0,0,0);
-
-	Serial.printf("hour = %d",hh);
-
-	return hh;
+	RtcDateTime now = this->getTimeNow();
+	return now.Hour();
+	//return 0;
 }
 
 
@@ -46,10 +52,10 @@ uint8_t Timing::getHH() {
 uint8_t Timing::getMM() {
 	byte mm;
 
-	RTC_DS1307 rtc;
+	/*RTC_DS1307 rtc;
 
 	rtc.GetTime(0, &mm, 0, 0, 0, 0, 0);
-
+	*/
 	return mm;
 }
 
@@ -60,9 +66,7 @@ uint8_t Timing::getMM() {
 uint8_t Timing::getSS() {
 	byte ss;
 
-	RTC_DS1307 rtc;
-
-	rtc.GetTime(&ss, 0, 0, 0, 0, 0, 0);
+	//this->GetTime(&ss, 0, 0, 0, 0, 0, 0);
 
 	return ss;
 }
@@ -94,9 +98,9 @@ uint16_t Timing::getAMwkUPmins() {
 //	uint16_t Timing::getAMWakeUPSecons()
 //----------------------------------------------------------------------------------
 uint32_t Timing::getAMWakeUPSecons() {
-	RTC_DS1307 rtc;
 
-	time_t next = rtc.UnixTimestamp();
+//	//time_t next = this->Epoch64Time();
+	time_t next = 0;
 	printTime(next);
 
 	time(&next);
@@ -147,16 +151,17 @@ bool Timing::isFreshStart(time_t timeNow, time_t mesure_time) {
 //----------------------------------------------------------------------------------
 bool Timing::isDay() {
 
+	Serial.println("bool Timing::isDay()");
 
-	if ((getHH() >= Wk_UP_Hr - 1) && (getHH() <= Sleep_Hr))
+	if ((this->getHH() >= Wk_UP_Hr - 1) && (this->getHH() <= Sleep_Hr))
 	{
 
-		Serial.printf("Hour of a day = %d\n", getHH());
+		Serial.printf("Hour of a day = %d\n", this->getHH());
 		return true;
 	}
 	else {
 
-		Serial.printf("Hour of night = %d\n", getHH());
+		Serial.printf("Hour of night = %d\n", this->getHH());
 		return false;
 	}
 }
@@ -335,9 +340,26 @@ uint Timing::getNextMeasuringSecLeft(uint8_t hour, uint8_t minute) {
 		return ss_left;
 	}
 }
+
 //----------------------------------------------------------------------------------
 //	printTime(time_t time)
 //----------------------------------------------------------------------------------
 void Timing::printTime(time_t time) {
 	Serial.printf("%s\n", asctime(gmtime(&time)));
+}
+
+void Timing::printDateTime(const RtcDateTime& dt)
+{
+	char datestring[20];
+
+	snprintf_P(datestring,
+		countof(datestring),
+		PSTR("%02u/%02u/%04u %02u:%02u:%02u"),
+		dt.Month(),
+		dt.Day(),
+		dt.Year(),
+		dt.Hour(),
+		dt.Minute(),
+		dt.Second());
+	Serial.print(datestring);
 }

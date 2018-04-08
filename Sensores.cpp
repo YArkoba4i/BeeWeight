@@ -78,7 +78,8 @@ float Sensores::readHumidity()
 //----------------------------------------------------------------------------------
 float Sensores::readWeight()
 {
-
+	Serial.println("readWeight");
+	//return this->scale->get_units();
 	return this->scale->get_units(MEASURE_TIMES);// -20.74;
 }
 
@@ -92,6 +93,16 @@ float Sensores::getVoltage() {
 	//	Serial.println("Voltage = " + String(vccVolt, 1));
 	return vccVolt;
 }
+
+//----------------------------------------------------------------------------------
+//	printWeight()
+//----------------------------------------------------------------------------------
+void Sensores::printWeight()
+{
+
+	Serial.printf("Weight =%f", this->scale->get_units(MEASURE_TIMES));// -20.74;
+}
+
 //----------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------

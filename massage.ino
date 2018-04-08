@@ -4,7 +4,7 @@
 //----------------------------------------------------------------------------------
 const char *_server = "184.106.153.149"; // thingspeak.com
 
-const int channelID = 332445;
+//const int channelID = 332445;
 const char *_APIKey = "P1SOR94TRFN6E5DM"; // write API key for your ThingSpeak Channel
 const char *_GET = "GET https://api.thingspeak.com/update?api_key=";
 
@@ -68,7 +68,8 @@ void sendMessage(WiFiClient *client, Sensores *sensor, float minDelta, float Del
 		}
 
 
-		//int send_size = client->print(cmd);
+		//int send_size = 
+		client->print(cmd);
 
 		//	Serial.printf("Send size = %i,  cmd size = %i \n",send_size, sizeof(cmd));
 
