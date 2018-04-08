@@ -11,6 +11,8 @@
 #define DEVICE_ID "ESP8266 ESP-01" 
 //"SparkFun ESP8266 Thing Dev"
 
+// Data wire is plugged into port 2 on the Arduino
+#define ONE_WIRE_BUS 2
 
 #define calibrVcc	1.088410
 

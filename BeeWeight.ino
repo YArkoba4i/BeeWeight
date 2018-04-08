@@ -2,6 +2,7 @@
 
 
 
+
 #include <ESP8266WiFi.h>
 
 #include "config.h"
@@ -39,6 +40,7 @@ void setup()
 	
 	// serial
 	sensor.initSerial();
+	sensor.initDallas();
 
 	tm.initTime();
 	//rtcm.EraseRTSmemStr();
@@ -59,11 +61,11 @@ void setup()
 	*/
 
 	// initialization of sensores
-	sensor.initDHT();
+	//sensor.initDHT();
 	sensor.initHX711();
 	delay(2000);
 	
-	initWifi();
+//	initWifi();
 
 	/*if (rtcm.isfirstRTCmemwrite())
 		rtcm.EraseRTSmemStr();
@@ -80,9 +82,9 @@ void loop()
 
 	tm.printTime(tm.getTimeNow());
 	 
-	Serial.printf("Weight =%f", sensor.readWeight());
-	Serial.printf("Temperature =%f", sensor.readTemperature());
-	Serial.printf("Humidity =%f", sensor.readHumidity());
+	Serial.printf("Weight =%f\n", sensor.readWeight());
+	Serial.printf("Temperature =%f\n", sensor.readDallasTemperature());
+	//Serial.printf("Humidity =%f", sensor.readHumidity());
 	//sendMessage(&client, &sensor,NULL, NULL);
 //	rtcm.WriteRTCmemData();
 	delay(5000);
