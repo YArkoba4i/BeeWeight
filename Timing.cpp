@@ -4,8 +4,8 @@
 Timing::Timing() : RtcDS1307<TwoWire>(Wire)
 {
 
-	Wire.begin();
-
+	Wire.begin(_SDA, _SCL);
+	
 }
 
 
@@ -15,10 +15,20 @@ Timing::~Timing()
 
 void Timing::initTime() {
 
-	
 	this->Begin();
+	this->SetIsRunning(true);
 
+	
+	for (size_t i = 0; i < 5; i++)
+	{
 
+		if (this->GetIsRunning()) {
+			if (this->IsDateTimeValid())
+				return;
+		}
+		//Serial.printf("initTime %d", i);
+	}
+//	this->printTime(this->GetDateTime());
 }
 
 
@@ -29,11 +39,24 @@ void Timing::initTime() {
 time_t Timing::getTimeNow() {
 	
 	RtcDateTime now = this->GetDateTime();
-	return  now.Epoch64Time();
-
+	return  (time_t)now.Epoch64Time();
+	//return  now.Epoch32Time();
 
 }
 
+//----------------------------------------------------------------------------------
+// increaseTime(uint min);
+//----------------------------------------------------------------------------------
+void Timing::increaseTime(uint sec) {
+
+	RtcDateTime now = this->GetDateTime();
+	uint32_t next = now.TotalSeconds();
+
+	next = next + sec;
+
+	this->SetDateTime(RtcDateTime(next));
+
+}
 //----------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------
@@ -42,7 +65,7 @@ uint8_t Timing::getHH() {
 
 	RtcDateTime now = this->getTimeNow();
 	return now.Hour();
-	//return 0;
+
 }
 
 
@@ -50,13 +73,9 @@ uint8_t Timing::getHH() {
 //		uint8_t Timing::getMM()
 //----------------------------------------------------------------------------------
 uint8_t Timing::getMM() {
-	byte mm;
 
-	/*RTC_DS1307 rtc;
-
-	rtc.GetTime(0, &mm, 0, 0, 0, 0, 0);
-	*/
-	return mm;
+	RtcDateTime now = this->getTimeNow();
+	return now.Minute();
 }
 
 
@@ -64,11 +83,9 @@ uint8_t Timing::getMM() {
 //		uint8_t Timing::getSS()
 //----------------------------------------------------------------------------------
 uint8_t Timing::getSS() {
-	byte ss;
 
-	//this->GetTime(&ss, 0, 0, 0, 0, 0, 0);
-
-	return ss;
+	RtcDateTime now = this->getTimeNow();
+	return now.Second();
 }
 
 //----------------------------------------------------------------------------------
@@ -99,22 +116,22 @@ uint16_t Timing::getAMwkUPmins() {
 //----------------------------------------------------------------------------------
 uint32_t Timing::getAMWakeUPSecons() {
 
-//	//time_t next = this->Epoch64Time();
-	time_t next = 0;
+	time_t next = getTimeNow();
+//	time_t next = 0;
 	printTime(next);
 
-	time(&next);
+	//time(&next);
 	struct tm beg;
 	beg = *localtime(&next);
 
 	beg.tm_mday++;
-	beg.tm_hour = 6;
+	beg.tm_hour = Wk_UP_Hr;
 	beg.tm_min = 0;
 	beg.tm_sec = 0;
 
 	next = mktime(&beg);
 
-	Serial.println("Wake UP time is ");
+	//Serial.println("Wake UP time is ");
 	printTime(next);
 
 
@@ -134,7 +151,7 @@ bool Timing::isFreshStart(time_t timeNow, time_t mesure_time) {
 
 	struct tm * timeinfo;
 	timeinfo = localtime(&timeDiff);
-	Serial.printf("Time Diff = %d\n", timeinfo->tm_hour);
+	//Serial.printf("Time Diff = %d\n", timeinfo->tm_hour);
 
 	if ((uint)timeinfo->tm_hour > this->two_days) {
 
@@ -151,17 +168,17 @@ bool Timing::isFreshStart(time_t timeNow, time_t mesure_time) {
 //----------------------------------------------------------------------------------
 bool Timing::isDay() {
 
-	Serial.println("bool Timing::isDay()");
+	//Serial.println("bool Timing::isDay()");
 
 	if ((this->getHH() >= Wk_UP_Hr - 1) && (this->getHH() <= Sleep_Hr))
 	{
 
-		Serial.printf("Hour of a day = %d\n", this->getHH());
+//		Serial.printf("\nIs Day = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else {
 
-		Serial.printf("Hour of night = %d\n", this->getHH());
+//		Serial.printf("\nIs Night = %d:%d \n", this->getHH(), this->getMM());
 		return false;
 	}
 }
@@ -174,14 +191,16 @@ bool Timing::isDay() {
 bool Timing::isWakeUPHour() {
 
 
-	if ((getHH() == (Wk_UP_Hr - 1))  // > 05:00 
-		|| ((getHH() == Wk_UP_Hr) && (getMM() < 10))) // 6:10 <
+	if (((getHH() == (Wk_UP_Hr - 1)) && (getMM() > 55))  // > 05:55 
+		|| ((getHH() == Wk_UP_Hr) && (getMM() < 5))) // 6:10 <
 
 	{
+//		Serial.printf("\nIs Wake UP Hour = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else
 	{
+//		Serial.printf("\nIs NOT Wake UP Hour = %d:%d \n", this->getHH(), this->getMM());
 		return false;
 	}
 
@@ -194,14 +213,16 @@ bool Timing::isWakeUPHour() {
 bool Timing::isDayHours() {
 
 
-	if (((getHH() == Wk_UP_Hr) && (getMM() >= 10)) // > 06:10 & 07:00 <
-		|| ((getHH() > Wk_UP_Hr) && (getHH() < Sleep_Hr - 1)) // > 6:00 & 21:00 <
-		|| ((getHH() == (Sleep_Hr - 1)) && (getMM() <= 50))) // 21:50 <=
+	if (((getHH() == Measure_Hr-1) && (getMM() >= 55)) // > 06:55 
+		|| ((getHH() >= Measure_Hr) && (getHH() < Sleep_Hr - 1)) // > 7:00 & 21:00 <
+		|| ((getHH() == (Sleep_Hr - 1)) && (getMM() <= 55))) // 21:50 <=
 	{
+//		Serial.printf("\nIs Day Hours = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else
 	{
+//		Serial.printf("\nIs NOT Day Hours = %d:%d \n", this->getHH(), this->getMM());
 		return false;
 	}
 
@@ -214,13 +235,15 @@ bool Timing::isDayHours() {
 bool Timing::isSleepHour() {
 
 
-	if (((getHH() == (Sleep_Hr - 1)) && (getMM() > 50)) // > 21:50
-		|| (getHH() == Sleep_Hr)) // > 22:00
+	if (((getHH() == (Sleep_Hr - 1)) && (getMM() > 55)) // > 21:50
+		|| ((getHH() == Sleep_Hr) && (getMM() < 10))) // < 22:10
 	{
+//		Serial.printf("\nIs Sleep Hours = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else
 	{
+//		Serial.printf("\nIs NOT Sleep Hours = %d:%d \n", this->getHH(), this->getMM());
 		return false;
 	}
 
@@ -247,13 +270,13 @@ uint16_t Timing::getNextMeasuringMinLeft() {
 
 
 //----------------------------------------------------------------------------------
-//	
+//	getNextMeasuringSecLeft()
 //----------------------------------------------------------------------------------
 uint Timing::getNextMeasuringSecLeft() {
 
-
+	//Serial.println("getNextMeasuringSecLeft() ...");
 	time_t next = getTimeNow();
-	printTime(next);
+	//printTime(next);
 
 	double  intpart;
 
@@ -264,7 +287,7 @@ uint Timing::getNextMeasuringSecLeft() {
 
 
 	// time structure
-	time(&next);
+	//ctime(&next);
 	struct tm beg;
 	beg = *localtime(&next);
 
@@ -275,16 +298,16 @@ uint Timing::getNextMeasuringSecLeft() {
 
 	next = mktime(&beg);
 
-	Serial.println("Next measuring time is ");
+	//Serial.println("Next measuring time is ");
 	printTime(next);
 
 	uint ss_left = (uint)fabs(difftime(next, getTimeNow()));
-	Serial.printf("ss_left = %d\n", ss_left);
+	//Serial.printf("ss_left = %d\n", ss_left);
 	if (ss_left < 180) {
 
 		next += INTERVAL * 60;
 
-		Serial.println("Next measuring time is ");
+		//Serial.println("Next measuring time is ");
 		printTime(next);
 
 
@@ -306,7 +329,7 @@ uint Timing::getNextMeasuringSecLeft(uint8_t hour, uint8_t minute) {
 	time_t next = getTimeNow();
 	//	printTime(next);
 
-	time(&next);
+	//time(&next);
 	struct tm beg;
 	beg = *localtime(&next);
 
@@ -319,7 +342,7 @@ uint Timing::getNextMeasuringSecLeft(uint8_t hour, uint8_t minute) {
 
 	next = mktime(&beg);
 
-	Serial.println("Next measuring time is ");
+//	Serial.println("Next measuring time is ");
 	printTime(next);
 
 	uint ss_left = (uint)fabs(difftime(next, getTimeNow()));
@@ -328,7 +351,7 @@ uint Timing::getNextMeasuringSecLeft(uint8_t hour, uint8_t minute) {
 		beg.tm_min = ++intpart * INTERVAL;
 		next = mktime(&beg);
 
-		Serial.println("Next measuring time is ");
+		//Serial.println("Next measuring time is ");
 		printTime(next);
 
 

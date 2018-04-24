@@ -29,10 +29,10 @@ public:
 	float readTemperature();
 	float readHumidity();
 	float readWeight();
-	float getVoltage();
+	float readExternalVoltage();
 	void printTemperature();
 	void printWeight();
 	void setTare();
 	void initSerial();
-	bool readFromSerial(char *prompt, char *buf, int maxLen, int timeout);
+//	bool readFromSerial(char *prompt, char *buf, int maxLen, int timeout);
 };

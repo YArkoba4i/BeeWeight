@@ -25,6 +25,7 @@ public:
 	
 	void printTime(time_t time);
 	void printDateTime(const RtcDateTime& dt);
+	void increaseTime(uint min);
 	time_t getTimeNow();
 	uint8_t getHH();
 	uint8_t getMM();

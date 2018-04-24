@@ -25,23 +25,30 @@
 #define DHT_PIN 8
 
 #define Wk_UP_Hr	6		//Wake up hour 
+#define Measure_Hr	7		// Measure from Measure_Hr hour
 #define Sleep_Hr	22		//sleep hour
+
+// RTC_DS1307
+#define _SDA 5
+#define _SCL 4
+
 
 // HX711
 //#define _DOUT 4
 //#define _CLK 5
-
 #define _DOUT 12
 #define _CLK 13
 
-//#define calibration_factor 6120 // this calibration factor is for my 200g load cell
-#define calibration_factor -3781000
+// this calibration factor is for my 200g load cell
+#define calibration_factor -20510
+#define OFF_SET	-785058
+//#define calibration_factor -5050
 #define	MEASURE_TIMES	16
 
 #define TEMPERATURE_ALERT 30
 
 // Interval time(minutes) for sending message to IoT Hub
-#define INTERVAL 10
+#define INTERVAL 15
 
 // If don't have a physical DHT sensor, can send simulated data to IoT hub
 #define SIMULATED_DATA false

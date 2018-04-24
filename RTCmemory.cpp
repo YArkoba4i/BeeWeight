@@ -21,13 +21,13 @@ RTCmemory::~RTCmemory()
 void RTCmemory::readRTCmemData()
 {
 
-	Serial.println("ReadRTCmemData");
+	//Serial.println("ReadRTCmemData");
 	system_rtc_mem_read(START_ADR, this->ee_data, sizeof(ee_data_str));
 
-	Serial.printf("ee_data_str.am_wght = %f\n", this->ee_data->am_wght);
+	/*Serial.printf("ee_data_str.am_wght = %f\n", this->ee_data->am_wght);
 	Serial.printf("ee_data_str.not_wifi_cnnct_times = %lu\n", this->ee_data->not_wifi_cnnct_times);
 	Serial.printf("ee_data_str.sleep_sec = %d\n", this->ee_data->sleep_sec);
-
+	*/
 
 
 	delay(500);
@@ -39,11 +39,11 @@ void RTCmemory::readRTCmemData()
 void RTCmemory::WriteRTCmemData()
 {
 
-	Serial.println("WriteRTCmemData");
+	//Serial.println("WriteRTCmemData");
 
 
 	system_rtc_mem_write(START_ADR, this->ee_data, sizeof(ee_data_str));
-	Serial.println("WriteRTCmemData");
+	//Serial.println("WriteRTCmemData");
 
 }
 //----------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ bool RTCmemory::isfirstRTCmemwrite()
 	uint32_t flag;
 
 	system_rtc_mem_read(FLAG_ADR, &flag, sizeof(flag));
-	Serial.printf("RAM flag is = 0x%08x", flag);
+	//Serial.printf("RAM flag is = 0x%08x", flag);
 
 	if (flag != 0xffffffff)
 	{
@@ -88,8 +88,8 @@ bool RTCmemory::isfirstRTCmemwrite()
 void RTCmemory::setRTCmemFlag(uint32_t flag)
 {
 
-	Serial.println("setRTCmemFlag");
+	//Serial.println("setRTCmemFlag");
 	system_rtc_mem_write(FLAG_ADR, &flag, sizeof(flag));
-	Serial.printf("RAM flag is = 0x%08x", flag);
+	//Serial.printf("RAM flag is = 0x%08x", flag);
 
 }
