@@ -13,22 +13,30 @@ bool sendMessage(WiFiClient *client, Sensores *sensor, float minDelta, float Del
 		// Update line
 		//GET https ://api.thingspeak.com/update?api_key=P1SOR94TRFN6E5DM&field1=N&field2=N
 		//	if (initSensores()) {
+	
 		float temp = sensor->readDallasTemperature();
 		float humid = 0;// sensor->readHumidity();
 		float weight = sensor->readWeight();
 		float voltage = sensor->readExternalVoltage();
 		minDelta = minDelta * (-1);
-		// switch off HX711 to save power consumtion 
-//		sensor->HX711_OFF();
+		
+	
 
-		/*Serial.println("\n*****Sending Message*****\n");
+	//	Serial.println("\n*****Sending Message*****\n");
 
-		Serial.println("Weight = " + String(weight, 2));
+		/*Serial.println("Weight = " + String(weight, 2));
 		Serial.println("Temperature = " + String(temp, 2));
 		Serial.println("Humidity = " + String(humid, 2));
 		Serial.println("minDelta = " + String(minDelta, 2));
 		Serial.println("Delta = " + String(Delta, 2));
 		//tm.printTime();*/
+
+		/*float temp = 1.1;
+		float humid = 0;// sensor->readHumidity();
+		float weight = 2.2;
+		float voltage = 3.3;
+		minDelta = -4.4 * (-1);
+		Delta = 5.5;*/
 
 		String cmd = _GET;
 		cmd += _APIKey;

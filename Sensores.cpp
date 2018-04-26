@@ -94,25 +94,19 @@ void Sensores::printAddress(DeviceAddress deviceAddress)
 // function to print the temperature for a device
 void Sensores::printTemperature()
 {
-	// method 1 - slower
-	//Serial.print("Temp C: ");
-	//Serial.print(this->dallas->getTempC(this->insideThermometer);
-	//Serial.print(" Temp F: ");
-	//Serial.print(sensors.getTempF(deviceAddress)); // Makes a second call to getTempC and then converts to Fahrenheit
-	this->dallas->requestTemperatures();
-	// method 2 - faster
-	float tempC = this->dallas->getTempC(this->insideThermometer);
+	float tempC = readDallasTemperature();
 	Serial.print("Temp C: ");
 	Serial.print(tempC);
-	Serial.print(" Temp F: ");
-	Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
 }
 
 // function to print the temperature for a device
 float Sensores::readDallasTemperature()
 {
-	this->dallas->requestTemperatures();
-	return this->dallas->getTempC(this->insideThermometer);
+	if (this - dallas->isConnected(this->insideThermometer)) {
+		this->dallas->requestTemperatures();
+		return this->dallas->getTempC(this->insideThermometer);
+	}
+	else return -127;
 }
 
 bool Sensores::initHX711() {
@@ -147,7 +141,7 @@ bool Sensores::initHX711() {
 //	HX711_OFF()
 //----------------------------------------------------------------------------------
 void Sensores::HX711_OFF() {
-
+	
 	this->scale->power_down();
 	delay(500);
 
@@ -176,8 +170,10 @@ float Sensores::readWeight()
 {
 //	Serial.println("readWeight");
 	//return this->scale->get_units();
-	
-	return this->scale->get_units(MEASURE_TIMES);// -1484.15;// -20.74;
+	if (this->scale->is_ready())
+		return this->scale->get_units(MEASURE_TIMES);// -1484.15;// -20.74;
+	else
+		return -127;
 }
 
 
@@ -200,7 +196,7 @@ float Sensores::readExternalVoltage() {
 void Sensores::printWeight()
 {
 
-	Serial.printf("Weight =%f", this->scale->get_units(MEASURE_TIMES));// -20.74;
+	Serial.printf("Weight =%f", readWeight());// -20.74;
 }
 
 //----------------------------------------------------------------------------------

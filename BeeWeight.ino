@@ -60,12 +60,12 @@ RTCmemory rtcm;
 	//delay(2000);
 	// checking the memory
 	
-
-
+	tm.setDateTime();
+	tm.increaseTime(40);
 	// initialization of sensores
 	//sensor.initDHT();
 //	sensor.initHX711();
-//	sensor.initDallas();
+	sensor.initDallas();
 	
 
 //	setupWifi();
@@ -77,14 +77,20 @@ void loop()
 {
 
 	tm.printTime(tm.getTimeNow());
+	sensor.printTemperature();
 	
+/*	float weight = sensor.readWeight();
+	Serial.println("Weight = " + String(weight, 2));
 
+	wifiMsgSend(NULL, NULL);
 
 //	Serial.println("\n Voltage = " + String(sensor.readExternalVoltage(), 4));
+//	float temp = sensor.readDallasTemperature();
 
-	
+
+	//Serial.println("Temperature = " + String(temp, 2));
 	delay(1000);
-
+//	sleep_sec_mode(15);
 }// test loop */
 
 
@@ -92,12 +98,12 @@ void setup()
 {
 
 	tm.initTime();
-	
+	tm.setDateTime();
 // serial
-//	sensor.initSerial();
-//	delay(2000);
+	sensor.initSerial();
+	delay(2000);
 
-//	tm.printTime(tm.getTimeNow());
+	tm.printTime(tm.getTimeNow());
 
 	//rtcm.setRTCmemFlag(0xfffffff0);
 
@@ -115,10 +121,10 @@ void setup()
 		rtcm.EraseRTSmemStr();
 	}
 
-
+	//Serial.printf("rtcm.ee_data->not_wifi_cnnct_times = %d\n", rtcm.ee_data->not_wifi_cnnct_times);
 	if (tm.isDay() && (rtcm.ee_data->not_wifi_cnnct_times == 0)) {
 		
-		//Serial.println("Initalizing sensors");
+//		Serial.println("Initalizing sensors");
 		// initialization of sensores
 		sensor.initDallas();
 		if (!sensor.initHX711())
@@ -245,16 +251,25 @@ void loop()
 void sleep_mode(uint8_t min) {
 
 	//Serial.printf("Sleep for %d min\n ", min);
-	delay(10);
+	
 	if (WiFi.isConnected()) {
 		client.stop();
 		WiFi.disconnect();
 	}
 
-	delay(10);
+	// switch off HX711 to save power consumtion 
+	sensor.HX711_OFF();
+	
+	delay(100);
+
+	/*tm.increaseTime(min);
+	Serial.println("Updated time ");
+	tm.printTime(tm.getTimeNow());
+	int sec = 15;
+	ESP.deepSleep(sec * 1000000, WAKE_NO_RFCAL);*/
 
 	//ESP.deepSleep(20000);
-	ESP.deepSleep(min * 60000000, RF_DISABLED);
+	ESP.deepSleep(min * 60000000, WAKE_NO_RFCAL);
 
 }
 //----------------------------------------------------------------------------------
@@ -262,18 +277,21 @@ void sleep_mode(uint8_t min) {
 //----------------------------------------------------------------------------------
 void sleep_sec_mode(uint32_t sec) {
 
-	delay(10);
+
 	if (WiFi.isConnected()) {
 		client.stop();
 		WiFi.disconnect();
 	}
 
-	delay(10);
+	// switch off HX711 to save power consumtion
+	sensor.HX711_OFF();
 
-//	tm.increaseTime(sec);
-//	Serial.println("Updated time ");
-//	tm.printTime(tm.getTimeNow());
-//	sec = 15;
+	delay(100);
+
+	/*tm.increaseTime(sec);
+	Serial.println("Updated time ");
+	tm.printTime(tm.getTimeNow());
+	sec = 15;*/
 
 	//	ESP.deepSleep(sec * 100000, WAKE_RF_DEFAULT);
 	ESP.deepSleep(sec * 1000000, WAKE_NO_RFCAL);
@@ -303,57 +321,60 @@ void reset() {
 //----------------------------------------------------------------------------------
 void initWifi()
 {
-	// Attempt to connect to Wifi network:
-//	Serial.printf("Attempting to connect to SSID: %s.\r\n", ssid);
+//	Serial.println("setupWifi...");
 	WiFi.mode(WIFI_STA);
+	delay(500);
+	bool connected = false;
 
-	// Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-	WiFi.begin(ssid, pass);
-	//WiFi.begin("TP-LINK_5CF5A4", "60024060");
-
-	while ((WiFi.status() != WL_CONNECTED))
+	for (size_t i = 0; i < 5; i++)
 	{
-		// Get Mac Address and show it.
-		// WiFi.macAddress(mac) save the mac address into a six length array, but the endian may be different. The huzzah board should
-		// start from mac[0] to mac[5], but some other kinds of board run in the oppsite direction.
-		uint8_t mac[6];
-		WiFi.macAddress(mac);
-//		Serial.printf("You device with MAC address %02x:%02x:%02x:%02x:%02x:%02x connects to %s failed! Waiting 10 seconds to retry.\r\n",
-//			mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], ssid);
-		WiFi.begin(ssid, pass);
-	//	WiFi.begin("TP-LINK_5CF5A4", "60024060");
-		delay(10000);
-//		Serial.println("WiFi.RSSI() = " + String(WiFi.RSSI(), 10));
-
+		if(WiFi.status() != WL_CONNECTED)
+			WiFi.begin(ssid, pass); // only do WiFi.begin if not already connected
+		
+		delay(2000);
+		
+		if (WiFi.status() == WL_CONNECTED) {
+			connected = true;
+			Serial.println("WiFi is connected");
+			break;
+		}
+		else {
+			Serial.println("Retry WiFi connection ...");
+			delay(10000);
+		}
+		
 	}
-//	Serial.printf("Connected to wifi %s.....\r\n", ssid);
+
+	if (!connected) {
+		Serial.println("Connection Failed! Rebooting...");
+		delay(500);
+		sleep_mode(20);
+	}
+
+//	Serial.println("WiFi is ready");
 }
 
 void setupWifi() {
-//	Serial.begin(115200);
-//	delay(2000);
-//	Serial.println("Booting...---");
+//	Serial.println("setupWifi...");
 	WiFi.mode(WIFI_STA);
-//	delay(500);
+
+
 	int teltje = 0;
-//	pinMode(LED_PIN, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
 	while (WiFi.status() != WL_CONNECTED) {
-		delay(250);
-		//digitalWrite(LED_PIN, HIGH);
-		delay(250);
-		//digitalWrite(LED_PIN, LOW);
+		delay(500);
 		if (teltje == 0) {
 			WiFi.begin(ssid, pass); // only do WiFi.begin if not already connected
 		}
 		teltje++;
 	//	Serial.print(".");
 		if (teltje>20) {
-	//		Serial.println("Connection Failed! Rebooting...");
+//			Serial.println("Connection Failed! Rebooting...");
 			delay(500);
-			reset();
+			sleep_mode(20);
 		}
+		delay(10000);
 	}
-//	Serial.println("Ready");
+//	Serial.println("WiFi is ready");
 //	Serial.print("IP address: ");
 //	Serial.println(WiFi.localIP());
 }
@@ -362,17 +383,17 @@ void setupWifi() {
 void wifiMsgSend(float minD, float Delta)
 {
 	// connecting to Wifi
-
-	setupWifi();
+	initWifi();
+	//setupWifi();
 
 
 	for (size_t i = 0; i < 5; i++)
 	{
 		if (sendMessage(&client, &sensor, minD, Delta)) {
-		//	Serial.println("Message sent");
+//			Serial.println("Message sent");
 			return;
 		}
-		
+//		Serial.printf("Retrying to send message %d time \n ", i);
 	}
 	
 }

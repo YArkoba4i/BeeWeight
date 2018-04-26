@@ -17,7 +17,6 @@ void Timing::initTime() {
 
 	this->Begin();
 	this->SetIsRunning(true);
-
 	
 	for (size_t i = 0; i < 5; i++)
 	{
@@ -28,10 +27,17 @@ void Timing::initTime() {
 		}
 		//Serial.printf("initTime %d", i);
 	}
+
 //	this->printTime(this->GetDateTime());
 }
 
+void Timing::setDateTime() {
+	RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+	printDateTime(compiled);
+	Serial.println();
 
+	SetDateTime(compiled);
+}
 
 //----------------------------------------------------------------------------------
 // getTimeNow(
@@ -191,8 +197,8 @@ bool Timing::isDay() {
 bool Timing::isWakeUPHour() {
 
 
-	if (((getHH() == (Wk_UP_Hr - 1)) && (getMM() > 55))  // > 05:55 
-		|| ((getHH() == Wk_UP_Hr) && (getMM() < 5))) // 6:10 <
+	if (((getHH() == (Wk_UP_Hr - 1)) && (getMM() > 50))  // > 05:55 
+		|| ((getHH() == Wk_UP_Hr) && (getMM() < 10))) // 6:10 <
 
 	{
 //		Serial.printf("\nIs Wake UP Hour = %d:%d \n", this->getHH(), this->getMM());
@@ -215,7 +221,7 @@ bool Timing::isDayHours() {
 
 	if (((getHH() == Measure_Hr-1) && (getMM() >= 55)) // > 06:55 
 		|| ((getHH() >= Measure_Hr) && (getHH() < Sleep_Hr - 1)) // > 7:00 & 21:00 <
-		|| ((getHH() == (Sleep_Hr - 1)) && (getMM() <= 55))) // 21:50 <=
+		|| ((getHH() == (Sleep_Hr - 1)) && (getMM() <= 50))) // 21:50 <=
 	{
 //		Serial.printf("\nIs Day Hours = %d:%d \n", this->getHH(), this->getMM());
 		return true;
@@ -235,7 +241,7 @@ bool Timing::isDayHours() {
 bool Timing::isSleepHour() {
 
 
-	if (((getHH() == (Sleep_Hr - 1)) && (getMM() > 55)) // > 21:50
+	if (((getHH() == (Sleep_Hr - 1)) && (getMM() > 50)) // > 21:50
 		|| ((getHH() == Sleep_Hr) && (getMM() < 10))) // < 22:10
 	{
 //		Serial.printf("\nIs Sleep Hours = %d:%d \n", this->getHH(), this->getMM());
@@ -368,7 +374,7 @@ uint Timing::getNextMeasuringSecLeft(uint8_t hour, uint8_t minute) {
 //	printTime(time_t time)
 //----------------------------------------------------------------------------------
 void Timing::printTime(time_t time) {
-	Serial.printf("%s\n", asctime(gmtime(&time)));
+	Serial.printf("\n%s\n", asctime(gmtime(&time)));
 }
 
 void Timing::printDateTime(const RtcDateTime& dt)
