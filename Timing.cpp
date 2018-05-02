@@ -130,6 +130,8 @@ uint32_t Timing::getAMWakeUPSecons() {
 	struct tm beg;
 	beg = *localtime(&next);
 
+	//if((beg.tm_hour > 6)  )
+	
 	beg.tm_mday++;
 	beg.tm_hour = Wk_UP_Hr;
 	beg.tm_min = 0;
@@ -179,7 +181,7 @@ bool Timing::isDay() {
 	if ((this->getHH() >= Wk_UP_Hr - 1) && (this->getHH() <= Sleep_Hr))
 	{
 
-//		Serial.printf("\nIs Day = %d:%d \n", this->getHH(), this->getMM());
+		Serial.printf("\nIs Day = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else {
@@ -197,11 +199,11 @@ bool Timing::isDay() {
 bool Timing::isWakeUPHour() {
 
 
-	if (((getHH() == (Wk_UP_Hr - 1)) && (getMM() > 50))  // > 05:55 
-		|| ((getHH() == Wk_UP_Hr) && (getMM() < 10))) // 6:10 <
+	if (((getHH() == (Wk_UP_Hr - 1)) && (getMM() > 40))  // > 05:40 
+		|| ((getHH() == Wk_UP_Hr) && (getMM() < 15))) // 6:15 <
 
 	{
-//		Serial.printf("\nIs Wake UP Hour = %d:%d \n", this->getHH(), this->getMM());
+		Serial.printf("\nIs Wake UP Hour = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else
@@ -223,7 +225,7 @@ bool Timing::isDayHours() {
 		|| ((getHH() >= Measure_Hr) && (getHH() < Sleep_Hr - 1)) // > 7:00 & 21:00 <
 		|| ((getHH() == (Sleep_Hr - 1)) && (getMM() <= 50))) // 21:50 <=
 	{
-//		Serial.printf("\nIs Day Hours = %d:%d \n", this->getHH(), this->getMM());
+		Serial.printf("\nIs Day Hours = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else
@@ -244,7 +246,7 @@ bool Timing::isSleepHour() {
 	if (((getHH() == (Sleep_Hr - 1)) && (getMM() > 50)) // > 21:50
 		|| ((getHH() == Sleep_Hr) && (getMM() < 10))) // < 22:10
 	{
-//		Serial.printf("\nIs Sleep Hours = %d:%d \n", this->getHH(), this->getMM());
+		Serial.printf("\nIs Sleep Hours = %d:%d \n", this->getHH(), this->getMM());
 		return true;
 	}
 	else
@@ -305,7 +307,7 @@ uint Timing::getNextMeasuringSecLeft() {
 	next = mktime(&beg);
 
 	//Serial.println("Next measuring time is ");
-	printTime(next);
+	//printTime(next);
 
 	uint ss_left = (uint)fabs(difftime(next, getTimeNow()));
 	//Serial.printf("ss_left = %d\n", ss_left);
@@ -314,7 +316,7 @@ uint Timing::getNextMeasuringSecLeft() {
 		next += INTERVAL * 60;
 
 		//Serial.println("Next measuring time is ");
-		printTime(next);
+		//printTime(next);
 
 
 		uint ss_left = (uint)fabs(difftime(next, getTimeNow()));

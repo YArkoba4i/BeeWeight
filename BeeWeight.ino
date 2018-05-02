@@ -64,7 +64,7 @@ RTCmemory rtcm;
 	tm.increaseTime(40);
 	// initialization of sensores
 	//sensor.initDHT();
-//	sensor.initHX711();
+	sensor.initHX711();
 	sensor.initDallas();
 	
 
@@ -79,10 +79,10 @@ void loop()
 	tm.printTime(tm.getTimeNow());
 	sensor.printTemperature();
 	
-/*	float weight = sensor.readWeight();
-	Serial.println("Weight = " + String(weight, 2));
 
-	wifiMsgSend(NULL, NULL);
+	Serial.println("\nWeight = " + String(sensor.readWeight(), 2));
+
+//	wifiMsgSend(NULL, NULL);
 
 //	Serial.println("\n Voltage = " + String(sensor.readExternalVoltage(), 4));
 //	float temp = sensor.readDallasTemperature();
@@ -90,7 +90,7 @@ void loop()
 
 	//Serial.println("Temperature = " + String(temp, 2));
 	delay(1000);
-//	sleep_sec_mode(15);
+//	sleep_sec_mode(30);
 }// test loop */
 
 
@@ -98,10 +98,10 @@ void setup()
 {
 
 	tm.initTime();
-	tm.setDateTime();
+//	tm.setDateTime();
 // serial
 	sensor.initSerial();
-	delay(2000);
+//	delay(2000);
 
 	tm.printTime(tm.getTimeNow());
 
@@ -121,10 +121,11 @@ void setup()
 		rtcm.EraseRTSmemStr();
 	}
 
-	//Serial.printf("rtcm.ee_data->not_wifi_cnnct_times = %d\n", rtcm.ee_data->not_wifi_cnnct_times);
+	Serial.printf("rtcm.ee_data->not_wifi_cnnct_times = %d\n", rtcm.ee_data->not_wifi_cnnct_times);
 	if (tm.isDay() && (rtcm.ee_data->not_wifi_cnnct_times == 0)) {
 		
-//		Serial.println("Initalizing sensors");
+
+		Serial.println("Initalizing sensors");
 		// initialization of sensores
 		sensor.initDallas();
 		if (!sensor.initHX711())
@@ -177,8 +178,8 @@ void loop()
 		//		Serial.printf("6am... eeprom.sleep_sec = %d\n", ee_data.sleep_sec);
 	//	Serial.printf("6am... eeprom.am_wght = %f\n", rtcm.ee_data->am_wght);
 
-		// deep sleep till next measure
-		rtcm.ee_data->sleep_sec = tm.getNextMeasuringSecLeft(Wk_UP_Hr+1,0);
+		// deep sleep untill Measure_Hr
+		rtcm.ee_data->sleep_sec = tm.getNextMeasuringSecLeft(Measure_Hr,0);
 		
 		rtcm.WriteRTCmemData();
 
@@ -213,8 +214,9 @@ void loop()
 	else if // > 21:55 & 22:10 <
 		(tm.isSleepHour()) {
 
-		float minD = rtcm.ee_data->am_wght - sensor.readWeight();
-		float Delta = sensor.readWeight() - rtcm.ee_data->am_wght;
+		float weight = sensor.readWeight();
+		float minD = rtcm.ee_data->am_wght - weight;
+		float Delta = weight - rtcm.ee_data->am_wght;
 
 
 		//send message
@@ -224,7 +226,9 @@ void loop()
 		rtcm.ee_data->sleep_sec = tm.getAMWakeUPSecons();
 
 		rtcm.ee_data->last_measure_time = tm.getTimeNow();
-		rtcm.ee_data->not_wifi_cnnct_times = (uint8_t)ceil(rtcm.ee_data->sleep_sec / 3600);
+
+		//rtcm.ee_data->not_wifi_cnnct_times = (uint8_t)ceil(rtcm.ee_data->sleep_sec / 3600);
+		rtcm.ee_data->not_wifi_cnnct_times = (uint8_t)floor(rtcm.ee_data->sleep_sec / 3600);
 
 		//Serial.printf("10pm... Delta = %f\n", Delta);
 
@@ -255,18 +259,17 @@ void sleep_mode(uint8_t min) {
 	if (WiFi.isConnected()) {
 		client.stop();
 		WiFi.disconnect();
-	}
 
-	// switch off HX711 to save power consumtion 
-	sensor.HX711_OFF();
+	}
 	
 	delay(100);
 
 	/*tm.increaseTime(min);
 	Serial.println("Updated time ");
 	tm.printTime(tm.getTimeNow());
-	int sec = 15;
-	ESP.deepSleep(sec * 1000000, WAKE_NO_RFCAL);*/
+	int sec = 5;
+	ESP.deepSleep(sec * 1000000, WAKE_NO_RFCAL);
+	//*/
 
 	//ESP.deepSleep(20000);
 	ESP.deepSleep(min * 60000000, WAKE_NO_RFCAL);
@@ -283,15 +286,13 @@ void sleep_sec_mode(uint32_t sec) {
 		WiFi.disconnect();
 	}
 
-	// switch off HX711 to save power consumtion
-	sensor.HX711_OFF();
-
 	delay(100);
 
 	/*tm.increaseTime(sec);
 	Serial.println("Updated time ");
 	tm.printTime(tm.getTimeNow());
-	sec = 15;*/
+	sec = 5;
+	// */
 
 	//	ESP.deepSleep(sec * 100000, WAKE_RF_DEFAULT);
 	ESP.deepSleep(sec * 1000000, WAKE_NO_RFCAL);
@@ -354,32 +355,6 @@ void initWifi()
 //	Serial.println("WiFi is ready");
 }
 
-void setupWifi() {
-//	Serial.println("setupWifi...");
-	WiFi.mode(WIFI_STA);
-
-
-	int teltje = 0;
-	while (WiFi.status() != WL_CONNECTED) {
-		delay(500);
-		if (teltje == 0) {
-			WiFi.begin(ssid, pass); // only do WiFi.begin if not already connected
-		}
-		teltje++;
-	//	Serial.print(".");
-		if (teltje>20) {
-//			Serial.println("Connection Failed! Rebooting...");
-			delay(500);
-			sleep_mode(20);
-		}
-		delay(10000);
-	}
-//	Serial.println("WiFi is ready");
-//	Serial.print("IP address: ");
-//	Serial.println(WiFi.localIP());
-}
-
-
 void wifiMsgSend(float minD, float Delta)
 {
 	// connecting to Wifi
@@ -396,5 +371,7 @@ void wifiMsgSend(float minD, float Delta)
 //		Serial.printf("Retrying to send message %d time \n ", i);
 	}
 	
+	
+
 }
 

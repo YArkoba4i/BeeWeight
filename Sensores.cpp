@@ -75,9 +75,9 @@ void Sensores::initDallas()
 	// set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
 	this->dallas->setResolution(this->insideThermometer, 9);
 
-	//Serial.print("Device 0 Resolution: ");
-//	Serial.print(this->dallas->getResolution(this->insideThermometer), DEC);
-//	Serial.println();
+	Serial.print("Device 0 Resolution: ");
+	Serial.print(this->dallas->getResolution(this->insideThermometer), DEC);
+	Serial.println();
 
 }
 
@@ -102,6 +102,7 @@ void Sensores::printTemperature()
 // function to print the temperature for a device
 float Sensores::readDallasTemperature()
 {
+//	Serial.println("readDallasTemperature");
 	if (this - dallas->isConnected(this->insideThermometer)) {
 		this->dallas->requestTemperatures();
 		return this->dallas->getTempC(this->insideThermometer);
@@ -122,12 +123,12 @@ bool Sensores::initHX711() {
 		//scale.set_gain(128);
 		this->scale->set_offset(OFF_SET);
 		if (this->scale->is_ready()) {
-			//Serial.println("scale.is_ready:");
+			Serial.println("scale.is_ready:");
 			return true;
 		}
 		else
 		{
-			//Serial.println("scale.is_NOT_ready:");
+			Serial.println("scale.is_NOT_ready:");
 			this->scale->power_down();
 			delay(2000);
 		}
@@ -228,6 +229,7 @@ void Sensores::initSerial()
 	// Start serial and initialize stdout
 	Serial.begin(115200);
 	Serial.setDebugOutput(true);
+	delay(1000);
 	//Serial.println("Serial successfully inited.");
 }
 
