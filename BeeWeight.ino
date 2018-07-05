@@ -15,20 +15,20 @@
 
 
 char *ssid = "TP-LINK_5CF5A4";
-char *pass = "60024060";
+char *pass = "****";
 const char *_server = "184.106.153.149"; // thingspeak.com
 
 										 //const int channelID = 332445;
-const char *_APIKey = "P1SOR94TRFN6E5DM"; // write API key for your ThingSpeak Channel
+const char *_APIKey = "****; // write API key for your ThingSpeak Channel
 const char *_GET = "GET https://api.thingspeak.com/update?api_key=";
 
 //----------------------------------------------------------------------------------
 // Network connecting variables
 
 //char *ssid = "TP-LINK_5CF5A4";
-//char *pass = "60024060";
+//char *pass = "****";
 // char *ssid = "pr500k-27a997_3_RPT";
-//char *pass = "ce32fcda56211";
+//char *pass = "****";
 
 
 //----------------------------------------------------------------------------------
